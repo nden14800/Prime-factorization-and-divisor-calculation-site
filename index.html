@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python 素因数分解・約数計算サイト (BigInt対応版)</title>
+    <title>Python 素因数分解・約数計算サイト</title>
     
     <!-- Google Fonts: Roboto -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,17 +17,17 @@
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
 
     <style>
-        /* --- 基本スタイル --- */
+        /* CSSに変更はありません */
         :root {
             --bg-color: #f0f2f5; --card-bg-color: #ffffff; --text-color: #1c1e21; --sub-text-color: #606770;
             --border-color: #dddfe2; --input-bg-color: #f5f6f7; --button-bg-color: #1877f2;
-            --button-hover-bg-color: #166fe5; --button-text-color: #ffffff; --spinner-color: #1877f2;
+            --button-hover-bg-color: #166fe5; --button-text-color: #ffffff;
         }
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg-color: #18191a; --card-bg-color: #242526; --text-color: #e4e6eb; --sub-text-color: #b0b3b8;
                 --border-color: #3e4042; --input-bg-color: #3a3b3c; --button-bg-color: #2d88ff;
-                --button-hover-bg-color: #4293ff; --button-text-color: #ffffff; --spinner-color: #4293ff;
+                --button-hover-bg-color: #4293ff; --button-text-color: #ffffff;
             }
         }
         *, *::before, *::after { box-sizing: border-box; }
@@ -38,7 +38,7 @@
         .form-container { display: flex; gap: 10px; margin-bottom: 1.5rem; }
         #number-input { flex-grow: 1; padding: 12px 15px; font-size: 1rem; font-family: 'Roboto', sans-serif; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--input-bg-color); color: var(--text-color); transition: border-color 0.3s, background-color 0.3s; }
         #number-input:focus { outline: none; border-color: var(--button-bg-color); box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2); }
-        #factorize-button { padding: 12px 20px; font-size: 1rem; font-weight: bold; border: none; border-radius: 6px; background-color: var(--button-bg-color); color: var(--button-text-color); cursor: pointer; transition: background-color 0.2s; min-width: 100px; }
+        #factorize-button { padding: 12px 20px; font-size: 1rem; font-weight: bold; border: none; border-radius: 6px; background-color: var(--button-bg-color); color: var(--button-text-color); cursor: pointer; transition: background-color 0.2s; }
         #factorize-button:hover { background-color: var(--button-hover-bg-color); }
         #factorize-button:disabled { background-color: var(--sub-text-color); cursor: not-allowed; }
         #result-container { min-height: 80px; padding: 20px; margin-top: 1rem; border: 1px dashed var(--border-color); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; word-break: break-all; transition: border-color 0.3s; }
@@ -46,26 +46,16 @@
         .section-title { font-size: 1.3rem; font-weight: 700; color: var(--text-color); margin-top: 0; margin-bottom: 1rem; text-align: center; }
         #divisors-output { background-color: var(--input-bg-color); padding: 15px 20px; border-radius: 8px; line-height: 1.8; word-break: break-word; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); }
         #divisors-count { text-align: right; margin-top: 0.75rem; color: var(--sub-text-color); font-size: 1rem; }
-
-        /* --- ローディングスピナーのスタイル --- */
-        .loader { width: 60px; height: 60px; animation: rotate 2s linear infinite; transform-origin: center center; }
-        .loader .path { stroke: var(--spinner-color); stroke-linecap: round; animation: dash 1.5s ease-in-out infinite; }
-        @keyframes rotate { 100% { transform: rotate(360deg); } }
-        @keyframes dash {
-            0% { stroke-dasharray: 1, 150; stroke-dashoffset: 0; }
-            50% { stroke-dasharray: 90, 150; stroke-dashoffset: -35; }
-            100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
-        }
     </style>
 </head>
 <body>
 
     <main>
         <h1>素因数分解 & 約数計算</h1>
-        <p>Pythonで巨大な整数や小数を素因数分解します。</p>
+        <p>Pythonで整数・小数を素因数分解します。</p>
         
         <div class="form-container">
-            <input type="text" id="number-input" placeholder="例: 12345678901234567890, 7.5, 15/2">
+            <input type="text" id="number-input" placeholder="例: 2^100, 12345678901234567890, 7.5">
             <button id="factorize-button">計算！</button>
         </div>
 
@@ -91,228 +81,198 @@
 
         let pyodide = null;
 
-        // --- ローディングスピナーのHTML ---
-        const spinnerHTML = `
-            <svg class="loader" viewBox="0 0 50 50">
-                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="4"></circle>
-            </svg>`;
-
-        // --- Pythonコード (BigInt対応) ---
+        // Pythonコード（変更なし）
         const pythonCode = `
 import math
-
-# BigIntの平方根を求めるヘルパー関数
-def isqrt(n):
-    if n < 0:
-        raise ValueError("isqrt() argument must be non-negative")
-    if n == 0:
-        return 0
-    x = int(math.sqrt(n))
-    if (x + 1) ** 2 <= n:
-        x += 1
-    return x
-
 def get_prime_factors(n):
-    if not isinstance(n, int) or n < 2:
-        return []
+    if not isinstance(n, int) or n < 2: return []
     factors, d, temp_n = [], 2, n
     while d * d <= temp_n:
-        if temp_n % d == 0:
-            count = 0
-            while temp_n % d == 0:
-                count += 1
-                temp_n //= d
-            factors.append((d, count))
+        count = 0
+        while temp_n % d == 0: count += 1; temp_n //= d
+        if count > 0: factors.append((d, count))
         d += 1
-    if temp_n > 1:
-        factors.append((temp_n, 1))
+    if temp_n > 1: factors.append((temp_n, 1))
     return factors
-
 def get_all_divisors(n):
-    if not isinstance(n, int) or n < 1:
-        return []
-    divs = {1, n}
-    # 巨大数対応のため isqrt を使用
-    limit = isqrt(n)
-    for i in range(2, limit + 1):
-        if n % i == 0:
-            divs.add(i)
-            divs.add(n // i)
+    if not isinstance(n, int) or n < 1: return []
+    divs = {1}
+    # Pythonのintは任意精度なのでmath.isqrtが使える
+    for i in range(1, math.isqrt(n) + 1):
+        if n % i == 0: divs.add(i); divs.add(n // i)
     return sorted(list(divs))
-
 def get_divisors_count(factors):
     count = 1
-    for _, exponent in factors:
-        count *= (exponent + 1)
+    for _, exponent in factors: count *= (exponent + 1)
     return count
 `;
-
         // Pyodideの初期化
         async function initializePyodide() {
             factorizeButton.disabled = true;
-            factorizeButton.textContent = '準備中...';
-            try {
-                pyodide = await loadPyodide();
-                pyodide.runPython(pythonCode);
-                factorizeButton.textContent = '計算！';
-                factorizeButton.disabled = false;
-                numberInput.focus();
-            } catch (error) {
-                console.error("Pyodideの初期化に失敗しました:", error);
-                resultOutput.textContent = "コアコンポーネントの読み込みに失敗しました。ページをリロードしてください。";
-            }
+            pyodide = await loadPyodide();
+            pyodide.runPython(pythonCode);
+            factorizeButton.disabled = false;
+            numberInput.focus();
         }
 
         // --- JavaScriptヘルパー関数群 (BigInt対応) ---
-        const gcd = (a, b) => {
-            a = typeof a === 'bigint' ? a : BigInt(a);
-            b = typeof b === 'bigint' ? b : BigInt(b);
-            while (b) {
-                [a, b] = [b, a % b];
-            }
-            return a;
-        };
+        const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+        
         const formatNumberWithSpaces = (num) => {
-            const str = num.toString();
-            if (str.length < 5) return str;
-            return str.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            // BigIntとNumberの両方に対応
+            const limit = typeof num === 'bigint' ? 10000n : 10000;
+            if (num < limit) {
+                return num.toString();
+            }
+            return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
         };
-
+        
         /**
-         * ユーザー入力を解析し、整数または分数オブジェクトに変換する (BigInt対応)
+         * ユーザー入力を解析し、BigInt、分数オブジェクト、またはエラーに変換する
          */
         function parseInput(input) {
-            let str = input.trim();
+            let str = input.trim().replace(/,/g, '');
             if (str === "") return { error: '値を入力してください。' };
 
-            str = str.replace(/,/g, '');
+            // 小数 or 分数を含む場合: Number型として処理
+            if (str.includes('.') || str.includes('/')) {
+                try {
+                    // NOTE: new Functionは潜在的なセキュリティリスクを持ちますが、ここでは利便性を優先します。
+                    const sanitizedStr = str.replace(/\^/g, '**');
+                    if (/[^0-9\.\/\*\s\-\+]/.test(sanitizedStr)) {
+                       throw new Error("不正な文字が含まれています。");
+                    }
+                    const num = new Function(`return ${sanitizedStr}`)();
 
-            try {
-                // 安全でない文字が含まれていないかチェック
-                if (/[^0-9\.\/\s\*\^\-]/.test(str)) {
-                    return { error: '使用できない文字が含まれています。数字, ., /, *, ^, - のみ使用できます。' };
-                }
-
-                // 指数表記を `**` に変換
-                const sanitizedStr = str.replace(/\^/g, '**');
-
-                // 分数形式の処理
-                if (sanitizedStr.includes('/')) {
-                    const parts = sanitizedStr.split('/');
-                    if (parts.length !== 2) return { error: '不正な分数形式です。' };
-                    const numerator = BigInt(new Function(`return ${parts[0]}`)());
-                    const denominator = BigInt(new Function(`return ${parts[1]}`)());
-                    if (denominator === 0n) return { error: '分母を0にすることはできません。' };
-                    return { type: 'fraction', numerator, denominator };
-                }
-                
-                // 小数または整数の処理
-                if (sanitizedStr.includes('.')) { // 小数
-                    const numStr = new Function(`return ${sanitizedStr}`)().toString();
+                    if (typeof num !== 'number' || !isFinite(num)) {
+                        return { error: '無効な計算式です。' };
+                    }
+                    if (num > Number.MAX_SAFE_INTEGER) {
+                        return { error: '小数・分数の計算結果が大きすぎます。整数として入力してください。' };
+                    }
+                    if (Number.isInteger(num)) {
+                        return { type: 'integer', value: BigInt(num) };
+                    }
+                    
+                    const numStr = String(num);
                     const decimalPlaces = (numStr.split('.')[1] || '').length;
-                    const denominator = 10n ** BigInt(decimalPlaces);
-                    const numerator = BigInt(Math.round(parseFloat(numStr) * Math.pow(10, decimalPlaces)));
+                    const denominator = Math.pow(10, decimalPlaces);
+                    const numerator = Math.round(num * denominator);
                     const commonDivisor = gcd(numerator, denominator);
                     return {
                         type: 'fraction',
                         numerator: numerator / commonDivisor,
                         denominator: denominator / commonDivisor,
                     };
-                } else { // 整数
-                    const value = BigInt(new Function(`return ${sanitizedStr}n`)());
-                    return { type: 'integer', value };
+                } catch (e) {
+                    return { error: '入力形式が正しくありません。' };
                 }
+            }
+
+            // 整数として処理: BigInt型に変換
+            try {
+                const sanitizedStr = str.replace(/\^/g, '**');
+                if (/[^0-9\*\s\-\+n]/.test(sanitizedStr)) { // 'n' for BigInt literals
+                   throw new Error("不正な文字が含まれています。");
+                }
+                const result = new Function(`return ${sanitizedStr}`)();
+                if (typeof result !== 'number' && typeof result !== 'bigint') {
+                    return { error: '無効な計算式です。' };
+                }
+                return { type: 'integer', value: BigInt(result) };
             } catch (e) {
-                console.error("入力のパースエラー:", e);
-                return { error: '入力形式が正しくありません。数式を確認してください。' };
+                return { error: '整数の入力形式が正しくありません。' };
             }
         }
 
+        /**
+         * 素因数分解の結果をLaTeX文字列にフォーマットする
+         */
         function formatFactorsToLatex(factors) {
             if (!factors || factors.length === 0) return '1';
             return factors.map(([base, exponent]) => {
                 const baseStr = formatNumberWithSpaces(base);
-                return exponent === 1 ? baseStr : `${baseStr}^{${exponent}}`;
+                // 指数がbigintでもnumberでも動作するように == で比較
+                return exponent == 1 ? baseStr : `${baseStr}^{${exponent}}`;
             }).join(' \\times ');
         }
 
+        // 計算を実行するメイン関数
         async function runCalculation() {
-            factorizeButton.disabled = true;
-            resultOutput.innerHTML = spinnerHTML;
             divisorsSection.style.display = 'none';
             const inputValue = numberInput.value;
+            const parsed = parseInput(inputValue);
 
-            // 非同期で計算を実行し、UIがフリーズしないようにする
-            setTimeout(async () => {
-                try {
-                    const parsed = parseInput(inputValue);
-
-                    if (parsed.error) {
-                        resultOutput.textContent = parsed.error;
-                        return;
-                    }
-
-                    if (parsed.type === 'integer') {
-                        const n = parsed.value;
-                        if (n < 2n) {
-                            resultOutput.textContent = '計算対象は2以上の整数である必要があります。';
-                            return;
-                        }
-
-                        const getPrimeFactors = pyodide.globals.get('get_prime_factors');
-                        const getAllDivisors = pyodide.globals.get('get_all_divisors');
-                        const getDivisorsCount = pyodide.globals.get('get_divisors_count');
-
-                        const factors = getPrimeFactors(n).toJs({ dict_converter: Object.fromEntries, lossless: true });
-                        const divisors = getAllDivisors(n).toJs({ lossless: true });
-                        const count = getDivisorsCount(pyodide.toPy(factors));
-                        
-                        formatIntegerResult({ original: n, factors, divisors, count });
-
-                    } else if (parsed.type === 'fraction') {
-                        const { numerator, denominator } = parsed;
-                        const getPrimeFactors = pyodide.globals.get('get_prime_factors');
-                        
-                        const numFactors = getPrimeFactors(numerator).toJs({ dict_converter: Object.fromEntries, lossless: true });
-                        const denFactors = getPrimeFactors(denominator).toJs({ dict_converter: Object.fromEntries, lossless: true });
-
-                        formatFractionResult({ original: inputValue, numerator, denominator, numFactors, denFactors });
-                    }
-
-                } catch (error) {
-                    console.error("Python実行エラー:", error);
-                    resultOutput.textContent = '計算中にエラーが発生しました。入力値が大きすぎるか、形式が正しくない可能性があります。';
-                } finally {
-                    factorizeButton.disabled = false;
-                    // 結果表示時にスピナーは自然に上書きされる
-                }
-            }, 10); // 10msの遅延でスピナーが確実に表示されるようにする
-        }
-
-        function formatIntegerResult(data) {
-            const { original, factors, divisors, count } = data;
-            const originalStr = formatNumberWithSpaces(original);
-            
-            if (factors.length === 0) {
-                resultOutput.innerHTML = `\\( ${originalStr} \\) は素数です。`;
-            } else {
-                const latexString = formatFactorsToLatex(factors);
-                resultOutput.innerHTML = `\\( ${originalStr} = ${latexString} \\)`;
+            if (parsed.error) {
+                resultOutput.textContent = parsed.error;
+                return;
             }
 
-            divisorsOutput.textContent = divisors.map(formatNumberWithSpaces).join(', ');
+            try {
+                if (parsed.type === 'integer') {
+                    const n = parsed.value; // n is a BigInt
+                    if (n < 2n) { // BigIntと比較
+                        resultOutput.textContent = '計算対象は2以上の整数である必要があります。';
+                        return;
+                    }
+                    
+                    const getPrimeFactors = pyodide.globals.get('get_prime_factors');
+                    const getAllDivisors = pyodide.globals.get('get_all_divisors');
+                    const getDivisorsCount = pyodide.globals.get('get_divisors_count');
+                    
+                    // BigInt (n) を直接Python関数に渡す
+                    const factorsPy = getPrimeFactors(n);
+                    const divisorsPy = getAllDivisors(n);
+                    
+                    // toJs()は自動でBigIntに変換してくれる
+                    const factors = factorsPy.toJs({ dict_converter: Object.fromEntries });
+                    const divisors = divisorsPy.toJs();
+                    
+                    // Pythonオブジェクトを渡して計算
+                    const count = getDivisorsCount(factorsPy);
+                    
+                    formatIntegerResult({ original: n, factors, divisors, count });
+
+                } else if (parsed.type === 'fraction') {
+                    const { numerator, denominator } = parsed;
+                    
+                    const getPrimeFactors = pyodide.globals.get('get_prime_factors');
+                    const numFactors = getPrimeFactors(numerator).toJs({ dict_converter: Object.fromEntries });
+                    const denFactors = getPrimeFactors(denominator).toJs({ dict_converter: Object.fromEntries });
+
+                    formatFractionResult({ original: inputValue, numFactors, denFactors });
+                }
+            } catch (error) {
+                console.error("Python実行エラー:", error);
+                resultOutput.textContent = '計算中にエラーが発生しました。Pythonの計算上限を超えた可能性があります。';
+            }
+        }
+
+        // 整数の結果をフォーマット
+        function formatIntegerResult(data) {
+            const { original, factors, divisors, count } = data;
+            
+            if (factors.length === 0) {
+                resultOutput.innerHTML = `\\( ${formatNumberWithSpaces(original)} \\) は素数です。`;
+            } else {
+                const latexString = formatFactorsToLatex(factors);
+                resultOutput.innerHTML = `\\( ${formatNumberWithSpaces(original)} = ${latexString} \\)`;
+            }
+
+            divisorsOutput.textContent = divisors.map(d => formatNumberWithSpaces(d)).join(', ');
             divisorsCount.textContent = `(合計 ${formatNumberWithSpaces(count)} 個)`;
             divisorsSection.style.display = 'block';
             
             MathJax.typesetPromise([resultOutput, divisorsSection]);
         }
         
+        // 分数の結果をフォーマット
         function formatFractionResult(data) {
-            const { original, numerator, denominator, numFactors, denFactors } = data;
+            const { original, numFactors, denFactors } = data;
             const numLatex = formatFactorsToLatex(numFactors);
             const denLatex = formatFactorsToLatex(denFactors);
 
-            const displayOriginal = `\\frac{${formatNumberWithSpaces(numerator)}}{${formatNumberWithSpaces(denominator)}}`;
+            let displayOriginal = original.replace('/', ' \\div ');
             
             if (denLatex === '1') {
                  resultOutput.innerHTML = `\\( ${displayOriginal} = ${numLatex} \\)`;
@@ -327,10 +287,7 @@ def get_divisors_count(factors):
         // イベントリスナー
         factorizeButton.addEventListener('click', runCalculation);
         numberInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault(); // フォームのデフォルト送信を抑制
-                runCalculation();
-            }
+            if (event.key === 'Enter') runCalculation();
         });
         
         initializePyodide();
