@@ -17,7 +17,7 @@
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
 
     <style>
-        /* 基本スタイル (変更なし) */
+        /* 基本スタイル */
         :root {
             --bg-color: #f0f2f5; --card-bg-color: #ffffff; --text-color: #1c1e21; --sub-text-color: #606770;
             --border-color: #dddfe2; --input-bg-color: #f5f6f7; --button-bg-color: #1877f2;
@@ -80,14 +80,15 @@
             to { opacity: 1; }
         }
         .animate-fade-in {
-            animation: fadeIn 0.4s ease-in-out forwards;
+            animation: fadeIn 0.5s ease-in-out forwards;
         }
 
     </style>
 </head>
 <body>
 
-    <main>
+    <!-- 初期状態で非表示にし、JSでアニメーションを適用する -->
+    <main id="main-content" style="opacity: 0;">
         <h1>素因数分解 & 約数計算</h1>
         <p>Pythonで整数・小数を素因数分解します。</p>
         
@@ -112,52 +113,19 @@
     </main>
 
     <!-- HTML for modals -->
-    <div id="settings-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header"><h2 class="modal-title">設定</h2><button id="close-settings-modal-button" class="close-button" aria-label="閉じる"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button></div>
-            <div class="modal-body">
-                <div class="setting-item"><span>約数を表示する</span><label class="toggle-switch"><input type="checkbox" id="show-divisors-list-toggle" checked><span class="slider"></span></label></div>
-                <div class="setting-item"><span>約数の合計個数を表示する</span><label class="toggle-switch"><input type="checkbox" id="show-divisors-count-toggle" checked><span class="slider"></span></label></div>
-            </div>
-        </div>
-    </div>
-    <div id="help-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header"><h2 class="modal-title">入力例</h2><button id="close-help-modal-button" class="close-button" aria-label="閉じる"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button></div>
-            <div class="modal-body">
-                <p>以下の形式で数式を入力できます。</p>
-                <table class="help-table">
-                    <thead><tr><th>種類</th><th>入力例</th><th>説明</th></tr></thead>
-                    <tbody>
-                        <tr><td>整数</td><td><code>120</code></td><td>通常の整数です。</td></tr>
-                        <tr><td>巨大な整数</td><td><code>123...890</code><br><code>2n ** 100n</code></td><td>JavaScriptの上限を超える数も計算可能です。<code>n</code>を付けると巨大数として扱われます。</td></tr>
-                        <tr><td>小数</td><td><code>7.5</code></td><td>自動的に分数 (15/2) に変換されて計算されます。</td></tr>
-                        <tr><td>分数</td><td><code>15/2</code></td><td>除算として計算されます。</td></tr>
-                        <tr><td>指数</td><td><code>2^10</code><br><code>2**10</code></td><td><code>^</code> と <code>**</code> の両方に対応しています。</td></tr>
-                        <tr><td>四則演算</td><td><code>10 * (5 + 3)</code></td><td><code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> と括弧 <code>()</code> を使った計算が可能です。</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    <div id="settings-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">設定</h2><button id="close-settings-modal-button" class="close-button" aria-label="閉じる"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button></div><div class="modal-body"><div class="setting-item"><span>約数を表示する</span><label class="toggle-switch"><input type="checkbox" id="show-divisors-list-toggle" checked><span class="slider"></span></label></div><div class="setting-item"><span>約数の合計個数を表示する</span><label class="toggle-switch"><input type="checkbox" id="show-divisors-count-toggle" checked><span class="slider"></span></label></div></div></div></div>
+    <div id="help-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">入力例</h2><button id="close-help-modal-button" class="close-button" aria-label="閉じる"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button></div><div class="modal-body"><p>以下の形式で数式を入力できます。</p><table class="help-table"><thead><tr><th>種類</th><th>入力例</th><th>説明</th></tr></thead><tbody><tr><td>整数</td><td><code>120</code></td><td>通常の整数です。</td></tr><tr><td>巨大な整数</td><td><code>123...890</code><br><code>2n**100n</code></td><td>JavaScriptの上限を超える数も計算可能です。<code>n</code>を付けると巨大数として扱われます。</td></tr><tr><td>小数</td><td><code>7.5</code></td><td>自動的に分数に変換されて計算されます。</td></tr><tr><td>分数</td><td><code>15/2</code></td><td>除算として計算されます。</td></tr><tr><td>指数</td><td><code>2^10</code><br><code>2**10</code></td><td><code>^</code> と <code>**</code> の両方に対応しています。</td></tr><tr><td>四則演算</td><td><code>10*(5+3)</code></td><td><code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> と括弧 <code>()</code> を使った計算が可能です。</td></tr></tbody></table></div></div></div>
 
     <script>
         const dom = {
-            numberInput: document.getElementById('number-input'),
-            factorizeButton: document.getElementById('factorize-button'),
-            resultContainer: document.getElementById('result-container'),
-            resultOutput: document.getElementById('result-output'),
-            divisorsSection: document.getElementById('divisors-section'),
-            divisorsOutput: document.getElementById('divisors-output'),
-            divisorsCount: document.getElementById('divisors-count'),
-            settingsButton: document.getElementById('settings-button'),
-            settingsModal: document.getElementById('settings-modal'),
-            closeSettingsModalButton: document.getElementById('close-settings-modal-button'),
-            showDivisorsListToggle: document.getElementById('show-divisors-list-toggle'),
-            showDivisorsCountToggle: document.getElementById('show-divisors-count-toggle'),
-            helpButton: document.getElementById('help-button'),
-            helpModal: document.getElementById('help-modal'),
-            closeHelpModalButton: document.getElementById('close-help-modal-button'),
+            mainContent: document.getElementById('main-content'), numberInput: document.getElementById('number-input'),
+            factorizeButton: document.getElementById('factorize-button'), resultContainer: document.getElementById('result-container'),
+            resultOutput: document.getElementById('result-output'), divisorsSection: document.getElementById('divisors-section'),
+            divisorsOutput: document.getElementById('divisors-output'), divisorsCount: document.getElementById('divisors-count'),
+            settingsButton: document.getElementById('settings-button'), settingsModal: document.getElementById('settings-modal'),
+            closeSettingsModalButton: document.getElementById('close-settings-modal-button'), showDivisorsListToggle: document.getElementById('show-divisors-list-toggle'),
+            showDivisorsCountToggle: document.getElementById('show-divisors-count-toggle'), helpButton: document.getElementById('help-button'),
+            helpModal: document.getElementById('help-modal'), closeHelpModalButton: document.getElementById('close-help-modal-button'),
         };
 
         let pyodide = null;
@@ -236,14 +204,10 @@ def get_divisors_count(factors):
             dom.resultOutput.innerHTML = (factors.length === 0)
                 ? `\\( ${formatNumberWithSpaces(original)} \\) は素数です。`
                 : `\\( ${formatNumberWithSpaces(original)} = ${formatFactorsToLatex(factors)} \\)`;
-            
             const showList = settings.showDivisorsList && divisors.length > 0;
             const showCount = settings.showDivisorsCount && count > 0;
-            
-            if (showList) { dom.divisorsOutput.textContent = divisors.map(d => formatNumberWithSpaces(d)).join(', '); }
-            if (showCount) { dom.divisorsCount.textContent = `(合計 ${formatNumberWithSpaces(count)} 個)`; }
-            
-            // 表示要素にアニメーションを適用
+            if (showList) dom.divisorsOutput.textContent = divisors.map(d => formatNumberWithSpaces(d)).join(', ');
+            if (showCount) dom.divisorsCount.textContent = `(合計 ${formatNumberWithSpaces(count)} 個)`;
             dom.resultContainer.classList.add('animate-fade-in');
             if (showList || showCount) {
                 dom.divisorsSection.style.display = 'block';
@@ -251,27 +215,23 @@ def get_divisors_count(factors):
                 dom.divisorsCount.style.display = showCount ? 'block' : 'none';
                 dom.divisorsSection.classList.add('animate-fade-in');
             }
-            
             MathJax.typesetPromise([dom.resultOutput, dom.divisorsSection]);
         }
         
         function formatFractionResult({ original, numFactors, denFactors }) {
             const numLatex = formatFactorsToLatex(numFactors);
             const denLatex = formatFactorsToLatex(denFactors);
-            dom.resultOutput.innerHTML = (denLatex === '1')
-                ? `\\( ${original.replace('/', ' \\div ')} = ${numLatex} \\)`
-                : `\\( ${original.replace('/', ' \\div ')} = \\frac{${numLatex}}{${denLatex}} \\)`;
-            
+            dom.resultOutput.innerHTML = (denLatex === '1') ? `\\( ${original.replace('/', ' \\div ')} = ${numLatex} \\)` : `\\( ${original.replace('/', ' \\div ')} = \\frac{${numLatex}}{${denLatex}} \\)`;
             dom.resultContainer.classList.add('animate-fade-in');
             MathJax.typesetPromise([dom.resultOutput]);
         }
 
         async function runCalculation() {
-            // アニメーションをリセット
-            dom.divisorsSection.classList.remove('animate-fade-in');
-            dom.divisorsSection.style.display = 'none';
-            dom.resultContainer.classList.remove('animate-fade-in');
-            void dom.resultContainer.offsetWidth; // リフローを強制してアニメーションを再実行可能にする
+            [dom.divisorsSection, dom.resultContainer].forEach(el => {
+                el.classList.remove('animate-fade-in');
+                if (el === dom.divisorsSection) el.style.display = 'none';
+            });
+            void dom.resultContainer.offsetWidth;
 
             const parsed = parseInput(dom.numberInput.value);
             if (parsed.error) {
@@ -279,7 +239,6 @@ def get_divisors_count(factors):
                 dom.resultContainer.classList.add('animate-fade-in');
                 return;
             }
-
             try {
                 if (parsed.type === 'integer') {
                     const n = parsed.value;
@@ -308,7 +267,6 @@ def get_divisors_count(factors):
             }
         }
         
-        // イベントリスナー
         dom.factorizeButton.addEventListener('click', runCalculation);
         dom.numberInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') runCalculation(); });
         
@@ -317,22 +275,22 @@ def get_divisors_count(factors):
                 modal.style.display = 'flex';
                 modal.classList.add('animate-fade-in');
             });
-            closeButton.addEventListener('click', () => {
+            const closeModal = () => {
                 modal.classList.remove('animate-fade-in');
                 modal.style.display = 'none';
-            });
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('animate-fade-in');
-                    modal.style.display = 'none';
-                }
-            });
+            };
+            closeButton.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         };
         setupModal(dom.settingsButton, dom.settingsModal, dom.closeSettingsModalButton);
         setupModal(dom.helpButton, dom.helpModal, dom.closeHelpModalButton);
         
         dom.showDivisorsListToggle.addEventListener('change', (e) => { settings.showDivisorsList = e.target.checked; });
         dom.showDivisorsCountToggle.addEventListener('change', (e) => { settings.showDivisorsCount = e.target.checked; });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            dom.mainContent.classList.add('animate-fade-in');
+        });
 
         initializePyodide();
     </script>
