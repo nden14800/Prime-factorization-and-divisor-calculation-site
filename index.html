@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 素因数分解サイト</title>
+    
+    <!-- Google Fonts: Roboto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- MathJax V3 -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Pyodide (Python in the browser) -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+
+    <style>
+        /* CSS: 全てのスタイルをここに埋め込み */
+
+        /* ライト/ダークモード対応のカラー変数 */
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg-color: #ffffff;
+            --text-color: #1c1e21;
+            --sub-text-color: #606770;
+            --border-color: #dddfe2;
+            --input-bg-color: #f5f6f7;
+            --button-bg-color: #1877f2;
+            --button-hover-bg-color: #166fe5;
+            --button-text-color: #ffffff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #18191a;
+                --card-bg-color: #242526;
+                --text-color: #e4e6eb;
+                --sub-text-color: #b0b3b8;
+                --border-color: #3e4042;
+                --input-bg-color: #3a3b3c;
+                --button-bg-color: #2d88ff;
+                --button-hover-bg-color: #4293ff;
+                --button-text-color: #ffffff;
+            }
+        }
+
+        /* 基本スタイル */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* メインコンテナ */
+        main {
+            background-color: var(--card-bg-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            color: var(--sub-text-color);
+            margin-bottom: 2rem;
+        }
+
+        /* フォーム */
+        .form-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        #number-input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            font-size: 1rem;
+            font-family: 'Roboto', sans-serif;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+        #number-input:focus {
+            outline: none;
+            border-color: var(--button-bg-color);
+            box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
+        }
+        #number-input::-webkit-outer-spin-button,
+        #number-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        #number-input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+
+        #factorize-button {
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--button-bg-color);
+            color: var(--button-text-color);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #factorize-button:hover {
+            background-color: var(--button-hover-bg-color);
+        }
+        #factorize-button:disabled {
+            background-color: var(--sub-text-color);
+            cursor: not-allowed;
+        }
+
+        /* 結果表示エリア */
+        #result-container {
+            min-height: 80px;
+            padding: 20px;
+            margin-top: 1rem;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            word-break: break-all;
+            transition: border-color 0.3s;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <main>
+        <h1>素因数分解</h1>
+        <p>Pythonで整数を素因数分解します。</p>
+        
+        <div class="form-container">
+            <input type="number" id="number-input" placeholder="整数を入力 (例: 130)" min="2">
+            <button id="factorize-button">分解！</button>
+        </div>
+
+        <div id="result-container">
+            <div id="result-output">結果はここに表示されます</div>
+        </div>
+        
+    </main>
+
+    <script>
+        // JavaScript: 全てのスクリプトをここに埋め込み
+
+        // DOM要素の取得
+        const numberInput = document.getElementById('number-input');
+        const factorizeButton = document.getElementById('factorize-button');
+        const resultOutput = document.getElementById('result-output');
+
+        let pyodide = null;
+
+        // Pythonの素因数分解コード
+        const pythonCode = `
+import math
+
+def get_prime_factors(n):
+    if not isinstance(n, int) or n < 2:
+        return []
+    
+    factors = []
+    d = 2
+    temp_n = n
+    
+    while d * d <= temp_n:
+        count = 0
+        while temp_n % d == 0:
+            count += 1
+            temp_n //= d
+        if count > 0:
+            factors.append((d, count))
+        d += 1
+        
+    if temp_n > 1:
+        factors.append((temp_n, 1))
+        
+    return factors
+`;
+
+        // Pyodideの初期化とPythonコードの実行準備
+        async function initializePyodide() {
+            // Python環境が準備できるまでボタンを無効化
+            factorizeButton.disabled = true;
+
+            pyodide = await loadPyodide();
+            await pyodide.loadPackage([]); // 必要なパッケージがあればここに追加
+            pyodide.runPython(pythonCode);
+            
+            // 準備が完了したらボタンを有効化
+            factorizeButton.disabled = false;
+            numberInput.focus();
+        }
+
+        // 素因数分解を実行する関数
+        async function runFactorization() {
+            const inputValue = numberInput.value;
+            if (inputValue === '') {
+                resultOutput.textContent = '整数を入力してください。';
+                return;
+            }
+
+            const n = parseInt(inputValue, 10);
+
+            if (isNaN(n) || n < 2) {
+                resultOutput.textContent = '2以上の整数を入力してください。';
+                return;
+            }
+
+            if (n > Number.MAX_SAFE_INTEGER) {
+                 resultOutput.textContent = '安全に計算できる上限を超えています。';
+                return;
+            }
+
+
+            try {
+                // Python関数を呼び出し
+                const getPrimeFactors = pyodide.globals.get('get_prime_factors');
+                const factors = getPrimeFactors(n).toJs({ dict_converter: Object.fromEntries });
+
+                // 結果をMathJax形式にフォーマット
+                formatResult(n, factors);
+
+            } catch (error) {
+                console.error("Python実行エラー:", error);
+                resultOutput.textContent = '計算中にエラーが発生しました。';
+            }
+        }
+
+        // 結果をフォーマットして表示し、MathJaxで描画する関数
+        function formatResult(originalNumber, factors) {
+            if (factors.length === 0) {
+                 resultOutput.innerHTML = `\\( ${originalNumber} \\) は素数です。`;
+            } else {
+                const latexString = factors.map(([base, exponent]) => {
+                    if (exponent === 1) {
+                        return `${base}`;
+                    } else {
+                        return `${base}^{${exponent}}`;
+                    }
+                }).join(' \\times ');
+
+                resultOutput.innerHTML = `\\( ${originalNumber} = ${latexString} \\)`;
+            }
+
+            // MathJaxに数式の再描画を指示
+            if (window.MathJax) {
+                MathJax.typesetPromise([resultOutput]).catch((err) => console.log('MathJax typeset failed: ', err));
+            }
+        }
+
+        // イベントリスナーの設定
+        factorizeButton.addEventListener('click', runFactorization);
+        numberInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                runFactorization();
+            }
+        });
+
+        // ページ読み込み時にPyodideを初期化
+        initializePyodide();
+
+    </script>
+</body>
+</html>
