@@ -198,7 +198,7 @@
         <p>Pythonで整数を素因数分解し、約数を一覧表示します。</p>
         
         <div class="form-container">
-            <input type="number" id="number-input" placeholder="整数を入力 (例: 130)" min="2">
+            <input type="number" id="number-input" placeholder="整数を入力 (例: 10000)" min="2">
             <button id="factorize-button">計算！</button>
         </div>
 
@@ -267,7 +267,6 @@ def get_all_divisors(n):
 
 def get_divisors_count(factors):
     # factorsは [(素数, 指数), ...] というタプルのリスト
-    # 約数の個数は (指数1 + 1) * (指数2 + 1) * ... で計算できる
     count = 1
     for _, exponent in factors:
         count *= (exponent + 1)
@@ -285,7 +284,6 @@ def get_divisors_count(factors):
 
         // 計算を実行するメイン関数
         async function runCalculation() {
-            // 計算前に約数セクションを隠す
             divisorsSection.style.display = 'none';
 
             const inputValue = numberInput.value;
@@ -307,22 +305,15 @@ def get_divisors_count(factors):
             }
 
             try {
-                // --- Python関数を呼び出して計算 ---
                 const getPrimeFactors = pyodide.globals.get('get_prime_factors');
                 const getAllDivisors = pyodide.globals.get('get_all_divisors');
                 const getDivisorsCount = pyodide.globals.get('get_divisors_count');
 
-                // 1. 素因数分解
                 const factors = getPrimeFactors(n).toJs({ dict_converter: Object.fromEntries });
-                
-                // 2. 約数のリストを取得
                 const divisors = getAllDivisors(n).toJs();
-
-                // 3. 約数の個数を取得（素因数分解の結果をPythonに渡して計算）
                 const factorsPy = pyodide.toPy(factors);
                 const count = getDivisorsCount(factorsPy);
 
-                // --- 結果をフォーマットして表示 ---
                 formatResult(n, factors, divisors, count);
 
             } catch (error) {
@@ -330,6 +321,20 @@ def get_divisors_count(factors):
                 resultOutput.textContent = '計算中にエラーが発生しました。';
                 divisorsSection.style.display = 'none';
             }
+        }
+
+        // ▼▼▼ 新しく追加した数値フォーマット関数 ▼▼▼
+        /**
+         * 10000以上の数値をスペースで3桁区切りにする
+         * @param {number} num - フォーマットする数値
+         * @returns {string} フォーマットされた文字列
+         */
+        function formatNumberWithSpaces(num) {
+            if (num < 10000) {
+                return num.toString();
+            }
+            // 3桁ごとにスペースを挿入する正規表現
+            return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
         }
 
         // 結果をフォーマットして表示する関数
@@ -344,16 +349,16 @@ def get_divisors_count(factors):
                 resultOutput.innerHTML = `\\( ${originalNumber} = ${latexString} \\)`;
             }
 
-            // MathJaxで数式を再描画
             if (window.MathJax) {
                 MathJax.typesetPromise([resultOutput]).catch((err) => console.log('MathJax typeset failed: ', err));
             }
             
             // 約数と個数を表示
             if (divisors && divisors.length > 0) {
-                divisorsOutput.textContent = divisors.join(', ');
-                divisorsCount.textContent = `(合計 ${count} 個)`;
-                divisorsSection.style.display = 'block'; // セクションを表示
+                // ▼▼▼ 表示する前に各数値をフォーマットする ▼▼▼
+                divisorsOutput.textContent = divisors.map(formatNumberWithSpaces).join(', ');
+                divisorsCount.textContent = `(合計 ${formatNumberWithSpaces(count)} 個)`;
+                divisorsSection.style.display = 'block';
             }
         }
 
