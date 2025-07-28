@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Python 素因数分解・約数計算サイト</title>
     
-    <!-- Google Fonts: Roboto -->
+    <!-- Google Fonts: Roboto & Roboto Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     
     <!-- MathJax V3 -->
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -43,14 +43,12 @@
         #number-input { flex-grow: 1; padding: 12px 15px; font-size: 1rem; font-family: 'Roboto', sans-serif; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--input-bg-color); color: var(--text-color); transition: border-color 0.3s, background-color 0.3s; }
         #number-input:focus { outline: none; border-color: var(--button-bg-color); box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2); }
         
-        /* ボタン */
         .btn { padding: 12px 20px; font-size: 1rem; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; display: inline-flex; justify-content: center; align-items: center; }
         .btn:disabled { background-color: var(--sub-text-color); cursor: not-allowed; }
         #factorize-button { background-color: var(--button-bg-color); color: var(--button-text-color); flex-shrink: 0; }
         #factorize-button:not(:disabled):hover { background-color: var(--button-hover-bg-color); }
         #settings-button, #help-button { background-color: var(--button-secondary-bg-color); color: var(--button-secondary-text-color); padding: 12px; flex-shrink: 0; }
         #settings-button svg, #help-button svg { width: 20px; height: 20px; }
-        #help-button { width: 44px; font-size: 1.2rem; }
         #settings-button:not(:disabled):hover, #help-button:not(:disabled):hover { background-color: var(--button-secondary-hover-bg-color); }
 
         #result-container { min-height: 80px; padding: 20px; margin-top: 1rem; border: 1px dashed var(--border-color); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; word-break: break-all; transition: border-color 0.3s; }
@@ -83,8 +81,14 @@
         .help-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.95rem; }
         .help-table th, .help-table td { border: 1px solid var(--border-color); padding: 10px 12px; text-align: left; vertical-align: top; }
         .help-table th { background-color: var(--input-bg-color); font-weight: 700; }
-        .help-table code { background-color: var(--bg-color); color: var(--text-color); padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; word-break: break-all; }
-
+        .help-table code {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Roboto Mono', 'Courier New', Courier, monospace; /* ★フォント変更 */
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
@@ -97,28 +101,22 @@
             <input type="text" id="number-input" placeholder="例: (2^10 - 24) * 10, 2n ** 100n">
             <button id="factorize-button" class="btn">計算！</button>
             <button id="settings-button" class="btn" aria-label="設定">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/></svg>
             </button>
-            <button id="help-button" class="btn" aria-label="入力例">?</button>
+            <button id="help-button" class="btn" aria-label="入力例">
+                <!-- ★アイコン変更 -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-question" viewBox="0 0 16 16"><path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/></svg>
+            </button>
         </div>
 
-        <div id="result-container">
-            <div id="result-output">結果はここに表示されます</div>
-        </div>
-        
-        <div id="divisors-section" style="display: none;">
-            <h2 class="section-title">約数</h2>
-            <div id="divisors-output" style="display: none;"></div>
-            <p id="divisors-count" style="display: none;"></p>
-        </div>
+        <div id="result-container"><div id="result-output">結果はここに表示されます</div></div>
+        <div id="divisors-section" style="display: none;"><h2 class="section-title">約数</h2><div id="divisors-output" style="display: none;"></div><p id="divisors-count" style="display: none;"></p></div>
     </main>
 
     <!-- 設定モーダル -->
     <div id="settings-modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header"><h2 class="modal-title">設定</h2><button id="close-settings-modal-button" class="close-button" aria-label="閉じる"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button></div>
+            <div class="modal-header"><h2 class="modal-title">設定</h2><button id="close-settings-modal-button" class="close-button" aria-label="閉じる"><!-- ★アイコン統一 --><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button></div>
             <div class="modal-body">
                 <div class="setting-item"><span>約数を表示する</span><label class="toggle-switch"><input type="checkbox" id="show-divisors-list-toggle" checked><span class="slider"></span></label></div>
                 <div class="setting-item"><span>約数の合計個数を表示する</span><label class="toggle-switch"><input type="checkbox" id="show-divisors-count-toggle" checked><span class="slider"></span></label></div>
@@ -129,7 +127,7 @@
     <!-- 入力例モーダル -->
     <div id="help-modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header"><h2 class="modal-title">入力例</h2><button id="close-help-modal-button" class="close-button" aria-label="閉じる"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button></div>
+            <div class="modal-header"><h2 class="modal-title">入力例</h2><button id="close-help-modal-button" class="close-button" aria-label="閉じる"><!-- ★アイコン統一 --><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button></div>
             <div class="modal-body">
                 <p>以下の形式で数式を入力できます。</p>
                 <table class="help-table">
