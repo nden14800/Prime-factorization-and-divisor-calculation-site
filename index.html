@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python 素因数分解サイト</title>
+    <title>Python 素因数分解・約数計算サイト</title>
     
     <!-- Google Fonts: Roboto -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -59,7 +59,7 @@
             padding: 20px;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start; /* コンテンツが長くなるので上寄せに */
             min-height: 100vh;
             transition: background-color 0.3s, color 0.3s;
         }
@@ -71,9 +71,11 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             padding: 2.5rem;
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
             text-align: center;
             transition: background-color 0.3s;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
         }
 
         h1 {
@@ -119,7 +121,6 @@
             -moz-appearance: textfield;
         }
 
-
         #factorize-button {
             padding: 12px 20px;
             font-size: 1rem;
@@ -154,23 +155,63 @@
             transition: border-color 0.3s;
         }
         
+        /* 約数表示エリアのスタイル */
+        #divisors-section {
+            margin-top: 2rem;
+            text-align: left;
+            border-top: 1px solid var(--border-color);
+            padding-top: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-top: 0;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        #divisors-output {
+            background-color: var(--input-bg-color);
+            padding: 15px 20px;
+            border-radius: 8px;
+            line-height: 1.8;
+            word-break: break-word;
+            max-height: 200px; /* 約数が多い場合にスクロールバーを表示 */
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        #divisors-count {
+            text-align: right;
+            margin-top: 0.75rem;
+            color: var(--sub-text-color);
+            font-size: 1rem;
+        }
     </style>
 </head>
 <body>
 
     <main>
-        <h1>素因数分解</h1>
-        <p>Pythonで整数を素因数分解します。</p>
+        <h1>素因数分解 & 約数計算</h1>
+        <p>Pythonで整数を素因数分解し、約数を一覧表示します。</p>
         
         <div class="form-container">
             <input type="number" id="number-input" placeholder="整数を入力 (例: 130)" min="2">
-            <button id="factorize-button">分解！</button>
+            <button id="factorize-button">計算！</button>
         </div>
 
         <div id="result-container">
             <div id="result-output">結果はここに表示されます</div>
         </div>
         
+        <!-- 約数表示セクション（初期状態は非表示） -->
+        <div id="divisors-section" style="display: none;">
+            <h2 class="section-title">約数</h2>
+            <div id="divisors-output"></div>
+            <p id="divisors-count"></p>
+        </div>
     </main>
 
     <script>
@@ -180,10 +221,13 @@
         const numberInput = document.getElementById('number-input');
         const factorizeButton = document.getElementById('factorize-button');
         const resultOutput = document.getElementById('result-output');
+        const divisorsSection = document.getElementById('divisors-section');
+        const divisorsOutput = document.getElementById('divisors-output');
+        const divisorsCount = document.getElementById('divisors-count');
 
         let pyodide = null;
 
-        // Pythonの素因数分解コード
+        // Pythonの計算コード
         const pythonCode = `
 import math
 
@@ -208,24 +252,42 @@ def get_prime_factors(n):
         factors.append((temp_n, 1))
         
     return factors
+
+def get_all_divisors(n):
+    if not isinstance(n, int) or n < 1:
+        return []
+    
+    divs = {1}
+    for i in range(1, int(math.sqrt(n)) + 1):
+        if n % i == 0:
+            divs.add(i)
+            divs.add(n // i)
+    
+    return sorted(list(divs))
+
+def get_divisors_count(factors):
+    # factorsは [(素数, 指数), ...] というタプルのリスト
+    # 約数の個数は (指数1 + 1) * (指数2 + 1) * ... で計算できる
+    count = 1
+    for _, exponent in factors:
+        count *= (exponent + 1)
+    return count
 `;
 
         // Pyodideの初期化とPythonコードの実行準備
         async function initializePyodide() {
-            // Python環境が準備できるまでボタンを無効化
             factorizeButton.disabled = true;
-
             pyodide = await loadPyodide();
-            await pyodide.loadPackage([]); // 必要なパッケージがあればここに追加
             pyodide.runPython(pythonCode);
-            
-            // 準備が完了したらボタンを有効化
             factorizeButton.disabled = false;
             numberInput.focus();
         }
 
-        // 素因数分解を実行する関数
-        async function runFactorization() {
+        // 計算を実行するメイン関数
+        async function runCalculation() {
+            // 計算前に約数セクションを隠す
+            divisorsSection.style.display = 'none';
+
             const inputValue = numberInput.value;
             if (inputValue === '') {
                 resultOutput.textContent = '整数を入力してください。';
@@ -244,48 +306,62 @@ def get_prime_factors(n):
                 return;
             }
 
-
             try {
-                // Python関数を呼び出し
+                // --- Python関数を呼び出して計算 ---
                 const getPrimeFactors = pyodide.globals.get('get_prime_factors');
-                const factors = getPrimeFactors(n).toJs({ dict_converter: Object.fromEntries });
+                const getAllDivisors = pyodide.globals.get('get_all_divisors');
+                const getDivisorsCount = pyodide.globals.get('get_divisors_count');
 
-                // 結果をMathJax形式にフォーマット
-                formatResult(n, factors);
+                // 1. 素因数分解
+                const factors = getPrimeFactors(n).toJs({ dict_converter: Object.fromEntries });
+                
+                // 2. 約数のリストを取得
+                const divisors = getAllDivisors(n).toJs();
+
+                // 3. 約数の個数を取得（素因数分解の結果をPythonに渡して計算）
+                const factorsPy = pyodide.toPy(factors);
+                const count = getDivisorsCount(factorsPy);
+
+                // --- 結果をフォーマットして表示 ---
+                formatResult(n, factors, divisors, count);
 
             } catch (error) {
                 console.error("Python実行エラー:", error);
                 resultOutput.textContent = '計算中にエラーが発生しました。';
+                divisorsSection.style.display = 'none';
             }
         }
 
-        // 結果をフォーマットして表示し、MathJaxで描画する関数
-        function formatResult(originalNumber, factors) {
+        // 結果をフォーマットして表示する関数
+        function formatResult(originalNumber, factors, divisors, count) {
+            // 素因数分解の結果を表示
             if (factors.length === 0) {
                  resultOutput.innerHTML = `\\( ${originalNumber} \\) は素数です。`;
             } else {
                 const latexString = factors.map(([base, exponent]) => {
-                    if (exponent === 1) {
-                        return `${base}`;
-                    } else {
-                        return `${base}^{${exponent}}`;
-                    }
+                    return exponent === 1 ? `${base}` : `${base}^{${exponent}}`;
                 }).join(' \\times ');
-
                 resultOutput.innerHTML = `\\( ${originalNumber} = ${latexString} \\)`;
             }
 
-            // MathJaxに数式の再描画を指示
+            // MathJaxで数式を再描画
             if (window.MathJax) {
                 MathJax.typesetPromise([resultOutput]).catch((err) => console.log('MathJax typeset failed: ', err));
+            }
+            
+            // 約数と個数を表示
+            if (divisors && divisors.length > 0) {
+                divisorsOutput.textContent = divisors.join(', ');
+                divisorsCount.textContent = `(合計 ${count} 個)`;
+                divisorsSection.style.display = 'block'; // セクションを表示
             }
         }
 
         // イベントリスナーの設定
-        factorizeButton.addEventListener('click', runFactorization);
+        factorizeButton.addEventListener('click', runCalculation);
         numberInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
-                runFactorization();
+                runCalculation();
             }
         });
 
