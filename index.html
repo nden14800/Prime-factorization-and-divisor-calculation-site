@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python 多形式入力対応 素因数分解・約数計算サイト</title>
+    <title>Python 素因数分解・約数計算サイト</title>
     
     <!-- Google Fonts: Roboto -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,83 +17,203 @@
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
 
     <style>
+        /* CSS: 全てのスタイルをここに埋め込み */
+
+        /* ライト/ダークモード対応のカラー変数 */
         :root {
-            --bg-color: #f0f2f5; --card-bg-color: #ffffff; --text-color: #1c1e21;
-            --sub-text-color: #606770; --border-color: #dddfe2; --input-bg-color: #f5f6f7;
-            --button-bg-color: #1877f2; --button-hover-bg-color: #166fe5; --button-text-color: #ffffff;
+            --bg-color: #f0f2f5;
+            --card-bg-color: #ffffff;
+            --text-color: #1c1e21;
+            --sub-text-color: #606770;
+            --border-color: #dddfe2;
+            --input-bg-color: #f5f6f7;
+            --button-bg-color: #1877f2;
+            --button-hover-bg-color: #166fe5;
+            --button-text-color: #ffffff;
         }
+
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg-color: #18191a; --card-bg-color: #242526; --text-color: #e4e6eb;
-                --sub-text-color: #b0b3b8; --border-color: #3e4042; --input-bg-color: #3a3b3c;
-                --button-bg-color: #2d88ff; --button-hover-bg-color: #4293ff;
+                --bg-color: #18191a;
+                --card-bg-color: #242526;
+                --text-color: #e4e6eb;
+                --sub-text-color: #b0b3b8;
+                --border-color: #3e4042;
+                --input-bg-color: #3a3b3c;
+                --button-bg-color: #2d88ff;
+                --button-hover-bg-color: #4293ff;
+                --button-text-color: #ffffff;
             }
         }
-        *, *::before, *::after { box-sizing: border-box; }
+
+        /* 基本スタイル */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Roboto', sans-serif; background-color: var(--bg-color); color: var(--text-color);
-            margin: 0; padding: 20px; display: flex; justify-content: center; align-items: flex-start;
-            min-height: 100vh; transition: background-color 0.3s, color 0.3s;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
         }
+
+        /* メインコンテナ */
         main {
-            background-color: var(--card-bg-color); border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            padding: 2.5rem; width: 100%; max-width: 650px; text-align: center;
-            transition: background-color 0.3s; margin: 2rem 0;
+            background-color: var(--card-bg-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            transition: background-color 0.3s;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
         }
-        h1 { font-size: 2rem; margin: 0 0 0.5rem 0; }
-        p { color: var(--sub-text-color); margin-bottom: 2rem; }
-        .form-container { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+
+        h1 {
+            font-size: 2rem;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            color: var(--sub-text-color);
+            margin-bottom: 2rem;
+        }
+
+        /* フォーム */
+        .form-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
         #number-input {
-            flex-grow: 1; padding: 12px 15px; font-size: 1rem; font-family: 'Roboto', sans-serif;
-            border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--input-bg-color);
-            color: var(--text-color); transition: border-color 0.3s, background-color 0.3s;
+            flex-grow: 1;
+            padding: 12px 15px;
+            font-size: 1rem;
+            font-family: 'Roboto', sans-serif;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+            transition: border-color 0.3s, background-color 0.3s;
         }
-        #number-input:focus { outline: none; border-color: var(--button-bg-color); box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2); }
+        #number-input:focus {
+            outline: none;
+            border-color: var(--button-bg-color);
+            box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
+        }
+
         #factorize-button {
-            padding: 12px 20px; font-size: 1rem; font-weight: bold; border: none; border-radius: 6px;
-            background-color: var(--button-bg-color); color: var(--button-text-color); cursor: pointer;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--button-bg-color);
+            color: var(--button-text-color);
+            cursor: pointer;
             transition: background-color 0.2s;
         }
-        #factorize-button:hover { background-color: var(--button-hover-bg-color); }
-        #factorize-button:disabled { background-color: var(--sub-text-color); cursor: not-allowed; }
+        #factorize-button:hover {
+            background-color: var(--button-hover-bg-color);
+        }
+        #factorize-button:disabled {
+            background-color: var(--sub-text-color);
+            cursor: not-allowed;
+        }
+
+        /* 結果表示エリア */
+        #result-container {
+            min-height: 80px;
+            padding: 20px;
+            margin-top: 1rem;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            word-break: break-all;
+            transition: border-color 0.3s;
+        }
         
-        /* --- 結果表示エリアのスタイル --- */
-        #analysis-container { min-height: 80px; margin-top: 1rem; text-align: left; }
-        .result-block { border: 1px dashed var(--border-color); border-radius: 8px; padding: 20px; margin-top: 1.5rem; }
-        .result-block h2 {
-            font-size: 1.5rem; font-weight: 700; color: var(--text-color); margin: 0 0 1rem 0;
-            text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;
+        /* 約数表示エリアのスタイル */
+        #divisors-section {
+            margin-top: 2rem;
+            text-align: left;
+            border-top: 1px solid var(--border-color);
+            padding-top: 2rem;
         }
-        .factorization-result { font-size: 1.5rem; text-align: center; word-break: break-all; margin-bottom: 1.5rem; }
-        .divisors-title { font-size: 1.1rem; font-weight: 700; margin: 1.5rem 0 0.5rem 0; }
-        .divisors-list {
-            background-color: var(--input-bg-color); padding: 10px 15px; border-radius: 6px;
-            line-height: 1.8; word-break: break-word; max-height: 150px; overflow-y: auto;
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-top: 0;
+            margin-bottom: 1rem;
+            text-align: center;
         }
-        .divisors-count { text-align: right; margin-top: 0.5rem; color: var(--sub-text-color); font-size: 0.9rem; }
-        #error-output { color: #d93025; font-weight: bold; text-align: center; margin-top: 1.5rem; }
-        .info-text { text-align: center; color: var(--sub-text-color); margin-bottom: 1.5rem; }
+
+        #divisors-output {
+            background-color: var(--input-bg-color);
+            padding: 15px 20px;
+            border-radius: 8px;
+            line-height: 1.8;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        #divisors-count {
+            text-align: right;
+            margin-top: 0.75rem;
+            color: var(--sub-text-color);
+            font-size: 1rem;
+        }
     </style>
 </head>
 <body>
+
     <main>
-        <h1>多形式入力対応 数理解析</h1>
-        <p>整数・小数・分数・指数形式で入力された数を解析します。</p>
+        <h1>素因数分解 & 約数計算</h1>
+        <p>Pythonで整数を素因数分解し、約数を一覧表示します。</p>
         
         <div class="form-container">
-            <input type="text" id="number-input" placeholder="例: 130, 12.5, 36/48, 2^10">
-            <button id="factorize-button">解析！</button>
+            <!-- ▼▼▼ typeをtextに変更し、placeholderを更新 ▼▼▼ -->
+            <input type="text" id="number-input" placeholder="例: 120, 240/2, 2^10">
+            <button id="factorize-button">計算！</button>
         </div>
 
-        <div id="analysis-container">
-            <p class="info-text">結果はここに表示されます</p>
+        <div id="result-container">
+            <div id="result-output">結果はここに表示されます</div>
+        </div>
+        
+        <div id="divisors-section" style="display: none;">
+            <h2 class="section-title">約数</h2>
+            <div id="divisors-output"></div>
+            <p id="divisors-count"></p>
         </div>
     </main>
 
     <script>
+        // DOM要素の取得
         const numberInput = document.getElementById('number-input');
         const factorizeButton = document.getElementById('factorize-button');
-        const analysisContainer = document.getElementById('analysis-container');
+        const resultOutput = document.getElementById('result-output');
+        const divisorsSection = document.getElementById('divisors-section');
+        const divisorsOutput = document.getElementById('divisors-output');
+        const divisorsCount = document.getElementById('divisors-count');
 
         let pyodide = null;
 
@@ -101,28 +221,37 @@
 import math
 
 def get_prime_factors(n):
-    if not isinstance(n, int) or n < 2: return []
+    if not isinstance(n, int) or n < 2:
+        return []
+    
     factors = []
     d = 2
     temp_n = n
+    
     while d * d <= temp_n:
-        if temp_n % d == 0:
-            count = 0
-            while temp_n % d == 0:
-                count += 1
-                temp_n //= d
+        count = 0
+        while temp_n % d == 0:
+            count += 1
+            temp_n //= d
+        if count > 0:
             factors.append((d, count))
         d += 1
-    if temp_n > 1: factors.append((temp_n, 1))
+        
+    if temp_n > 1:
+        factors.append((temp_n, 1))
+        
     return factors
 
 def get_all_divisors(n):
-    if not isinstance(n, int) or n < 1: return []
+    if not isinstance(n, int) or n < 1:
+        return []
+    
     divs = {1}
     for i in range(1, int(math.sqrt(n)) + 1):
         if n % i == 0:
             divs.add(i)
             divs.add(n // i)
+    
     return sorted(list(divs))
 
 def get_divisors_count(factors):
@@ -130,13 +259,9 @@ def get_divisors_count(factors):
     for _, exponent in factors:
         count *= (exponent + 1)
     return count
-
-def simplify_fraction(n, d):
-    if d == 0: return None
-    common = math.gcd(n, d)
-    return {'numerator': n // common, 'denominator': d // common}
 `;
 
+        // Pyodideの初期化
         async function initializePyodide() {
             factorizeButton.disabled = true;
             pyodide = await loadPyodide();
@@ -145,166 +270,126 @@ def simplify_fraction(n, d):
             numberInput.focus();
         }
 
-        // 入力文字列を解釈する関数
-        function parseInput(inputStr) {
-            let str = inputStr.trim().replace(/,/g, ''); // カンマを削除
+        // ▼▼▼ 新しい入力解析関数 ▼▼▼
+        /**
+         * ユーザー入力を解析して整数に変換する
+         * @param {string} input - ユーザーの入力文字列
+         * @returns {{value: number | null, error: string | null}} 解析結果
+         */
+        function parseInputToInteger(input) {
+            const str = input.trim();
+            if (str === "") return { value: null, error: '値を入力してください。' };
 
-            // 指数形式 (e.g., "2^10")
+            // 指数表記 (^) の処理
             if (str.includes('^')) {
                 const parts = str.split('^');
-                if (parts.length !== 2) return { error: "指数の形式が正しくありません (例: 2^10)" };
-                const base = parseFloat(parts[0]);
-                const exponent = parseFloat(parts[1]);
-                if (isNaN(base) || isNaN(exponent)) return { error: "基数または指数が数値ではありません" };
+                if (parts.length !== 2) return { value: null, error: '不正な指数形式です (例: 2^10)。' };
+                const base = Number(parts[0]);
+                const exponent = Number(parts[1]);
+                if (isNaN(base) || isNaN(exponent)) return { value: null, error: '指数形式の底と指数は数値である必要があります。' };
                 const result = Math.pow(base, exponent);
-                if (!Number.isSafeInteger(result)) return { error: "指数計算の結果が安全な整数範囲を超えています" };
-                str = String(result); // 計算結果を次の処理に渡す
+                if (!Number.isInteger(result)) return { value: null, error: '指数の計算結果が整数になりません。' };
+                return { value: result, error: null };
             }
 
-            // 分数形式 (e.g., "3/4")
+            // 分数表記 (/) の処理
             if (str.includes('/')) {
                 const parts = str.split('/');
-                if (parts.length !== 2) return { error: "分数の形式が正しくありません (例: 3/4)" };
-                const num = parseFloat(parts[0]);
-                const den = parseFloat(parts[1]);
-                if (isNaN(num) || isNaN(den)) return { error: "分子または分母が数値ではありません" };
-                if (den === 0) return { error: "分母を0にすることはできません" };
-                if (!Number.isInteger(num) || !Number.isInteger(den)) return { error: "分数の分子・分母は整数である必要があります" };
-                return { type: 'fraction', numerator: num, denominator: den, original: inputStr };
+                if (parts.length !== 2) return { value: null, error: '不正な分数形式です (例: 100/5)。' };
+                const numerator = Number(parts[0]);
+                const denominator = Number(parts[1]);
+                if (isNaN(numerator) || isNaN(denominator)) return { value: null, error: '分数形式の分子と分母は数値である必要があります。' };
+                if (denominator === 0) return { value: null, error: '0で割ることはできません。' };
+                const result = numerator / denominator;
+                if (!Number.isInteger(result)) return { value: null, error: '分数の計算結果が整数になりません。' };
+                return { value: result, error: null };
             }
 
-            // 小数または整数
-            const num = parseFloat(str);
-            if (isNaN(num)) return { error: "有効な数値ではありません" };
-            if (!Number.isSafeInteger(num)) {
-                 // 小数なら分数に変換
-                if (str.includes('.')) {
-                    const decimalPlaces = (str.split('.')[1] || '').length;
-                    const denominator = Math.pow(10, decimalPlaces);
-                    const numerator = Math.round(num * denominator);
-                     if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(denominator)) {
-                        return { error: "小数を分数に変換できませんでした。精度が高すぎます。" };
-                    }
-                    return { type: 'fraction', numerator: numerator, denominator: denominator, original: inputStr };
-                }
-                return { error: "数値が安全な整数範囲を超えています" };
-            }
-            return { type: 'integer', value: num, original: inputStr };
+            // 科学記法 (e) と小数の処理
+            const num = Number(str);
+            if (isNaN(num)) return { value: null, error: '認識できない数値形式です。' };
+            if (!Number.isInteger(num)) return { value: null, error: '入力された小数は整数に変換できません。' };
+            
+            return { value: num, error: null };
         }
 
+        // 計算を実行するメイン関数
         async function runCalculation() {
-            const parsedInput = parseInput(numberInput.value);
-            analysisContainer.innerHTML = ''; // 結果エリアをクリア
+            divisorsSection.style.display = 'none';
+            const inputValue = numberInput.value;
 
-            if (parsedInput.error) {
-                analysisContainer.innerHTML = `<p id="error-output">${parsedInput.error}</p>`;
+            // ▼▼▼ 入力解析処理を最初に行う ▼▼▼
+            const parseResult = parseInputToInteger(inputValue);
+            if (parseResult.error) {
+                resultOutput.textContent = parseResult.error;
+                return;
+            }
+
+            const n = parseResult.value;
+
+            if (n < 2) {
+                resultOutput.textContent = '計算対象は2以上の整数である必要があります。';
+                return;
+            }
+
+            if (n > Number.MAX_SAFE_INTEGER) {
+                 resultOutput.textContent = '安全に計算できる上限を超えています。';
                 return;
             }
 
             try {
-                if (parsedInput.type === 'integer') {
-                    if (parsedInput.value < 2) {
-                         analysisContainer.innerHTML = `<p id="error-output">2以上の整数を解析できます</p>`;
-                         return;
-                    }
-                    const results = getAnalysis(parsedInput.value);
-                    displaySingleResult(parsedInput.value, results);
-                } 
-                else if (parsedInput.type === 'fraction') {
-                    // Pythonで約分
-                    const simplify = pyodide.globals.get('simplify_fraction');
-                    const simplified = simplify(parsedInput.numerator, parsedInput.denominator).toJs();
+                const getPrimeFactors = pyodide.globals.get('get_prime_factors');
+                const getAllDivisors = pyodide.globals.get('get_all_divisors');
+                const getDivisorsCount = pyodide.globals.get('get_divisors_count');
 
-                    // 約分後の分母が1なら整数として扱う
-                    if (simplified.denominator === 1) {
-                        const results = getAnalysis(simplified.numerator);
-                        displaySingleResult(simplified.numerator, results, parsedInput.original);
-                    } else {
-                        const numeratorResults = getAnalysis(simplified.numerator);
-                        const denominatorResults = getAnalysis(simplified.denominator);
-                        displayFractionResult(parsedInput, simplified, numeratorResults, denominatorResults);
-                    }
-                }
-                MathJax.typesetPromise([analysisContainer]);
+                const factors = getPrimeFactors(n).toJs({ dict_converter: Object.fromEntries });
+                const divisors = getAllDivisors(n).toJs();
+                const factorsPy = pyodide.toPy(factors);
+                const count = getDivisorsCount(factorsPy);
+
+                formatResult(n, factors, divisors, count);
 
             } catch (error) {
                 console.error("Python実行エラー:", error);
-                analysisContainer.innerHTML = `<p id="error-output">計算中にエラーが発生しました。</p>`;
+                resultOutput.textContent = '計算中にエラーが発生しました。';
+                divisorsSection.style.display = 'none';
             }
         }
         
-        // Python関数を呼び出して一連の解析データを取得
-        function getAnalysis(num) {
-            const getPrimeFactors = pyodide.globals.get('get_prime_factors');
-            const getAllDivisors = pyodide.globals.get('get_all_divisors');
-            const getDivisorsCount = pyodide.globals.get('get_divisors_count');
-            
-            const factors = getPrimeFactors(num).toJs({ dict_converter: Object.fromEntries });
-            const divisors = getAllDivisors(num).toJs();
-            const count = getDivisorsCount(pyodide.toPy(factors));
-            
-            return { factors, divisors, count };
-        }
-
         function formatNumberWithSpaces(num) {
-            return num < 10000 ? num.toString() : String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            if (num < 10000) return num.toString();
+            return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
         }
-        
-        // 1つの数値の結果を表示するHTMLを生成
-        function createResultHTML(num, results) {
-            const { factors, divisors, count } = results;
-            let factorsHTML = `\\( ${num} \\) は素数です。`;
-            if (factors.length > 0) {
-                const latexString = factors.map(([b, e]) => e === 1 ? `${b}` : `${b}^{${e}}`).join(' \\times ');
-                factorsHTML = `\\( ${num} = ${latexString} \\)`;
+
+        function formatResult(originalNumber, factors, divisors, count) {
+            if (factors.length === 0) {
+                 resultOutput.innerHTML = `\\( ${originalNumber} \\) は素数です。`;
+            } else {
+                const latexString = factors.map(([base, exponent]) => {
+                    return exponent === 1 ? `${base}` : `${base}^{${exponent}}`;
+                }).join(' \\times ');
+                resultOutput.innerHTML = `\\( ${formatNumberWithSpaces(originalNumber)} = ${latexString} \\)`;
             }
 
-            const divisorsList = divisors.map(formatNumberWithSpaces).join(', ');
-            const divisorsCountFormatted = formatNumberWithSpaces(count);
-
-            return `
-                <div class="factorization-result">${factorsHTML}</div>
-                <div class="divisors-title">約数</div>
-                <div class="divisors-list">${divisorsList}</div>
-                <p class="divisors-count">(合計 ${divisorsCountFormatted} 個)</p>
-            `;
+            if (window.MathJax) {
+                MathJax.typesetPromise([resultOutput]).catch((err) => console.log('MathJax typeset failed: ', err));
+            }
+            
+            if (divisors && divisors.length > 0) {
+                divisorsOutput.textContent = divisors.map(formatNumberWithSpaces).join(', ');
+                divisorsCount.textContent = `(合計 ${formatNumberWithSpaces(count)} 個)`;
+                divisorsSection.style.display = 'block';
+            }
         }
 
-        // 整数の結果を表示
-        function displaySingleResult(num, results, original = null) {
-            const title = original ? `入力: ${original} → ${num}` : `整数: ${num}`;
-            const resultHTML = createResultHTML(num, results);
-            analysisContainer.innerHTML = `
-                <div class="result-block">
-                    <h2>${title}</h2>
-                    ${resultHTML}
-                </div>
-            `;
-        }
-        
-        // 分数の結果を表示
-        function displayFractionResult(original, simplified, numResults, denResults) {
-            const originalText = original.original;
-            const simplifiedText = `\\( \\frac{${simplified.numerator}}{${simplified.denominator}} \\)`;
-
-            const numeratorHTML = createResultHTML(simplified.numerator, numResults);
-            const denominatorHTML = createResultHTML(simplified.denominator, denResults);
-
-            analysisContainer.innerHTML = `
-                <p class="info-text">入力: ${originalText} → 約分後: ${simplifiedText}</p>
-                <div class="result-block">
-                    <h2>分子: ${simplified.numerator}</h2>
-                    ${numeratorHTML}
-                </div>
-                <div class="result-block">
-                    <h2>分母: ${simplified.denominator}</h2>
-                    ${denominatorHTML}
-                </div>
-            `;
-        }
-        
+        // イベントリスナー
         factorizeButton.addEventListener('click', runCalculation);
-        numberInput.addEventListener('keydown', (e) => e.key === 'Enter' && runCalculation());
+        numberInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                runCalculation();
+            }
+        });
+        
         initializePyodide();
 
     </script>
