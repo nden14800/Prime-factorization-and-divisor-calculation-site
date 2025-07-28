@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python 素因数分解・約数計算サイト</title>
+    <title>Python 素因数分解・約数計算サイト (SymPy版)</title>
     
     <!-- Google Fonts: Roboto -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,44 +34,44 @@
                 --button-secondary-text-color: #e4e6eb;
             }
         }
-
-        /* フェードインアニメーション */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
         *, *::before, *::after { box-sizing: border-box; }
         body { font-family: 'Roboto', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
-        main { background-color: var(--card-bg-color); border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); padding: 2.5rem; width: 100%; max-width: 600px; text-align: center; margin-top: 2rem; margin-bottom: 2rem; animation: fadeIn 0.7s ease-in-out; }
+        main { background-color: var(--card-bg-color); border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); padding: 2.5rem; width: 100%; max-width: 600px; text-align: center; transition: background-color 0.3s; margin-top: 2rem; margin-bottom: 2rem; }
         h1 { font-size: 2rem; margin-top: 0; margin-bottom: 0.5rem; }
         p { color: var(--sub-text-color); margin-bottom: 2rem; }
         .form-container { display: flex; gap: 10px; margin-bottom: 1.5rem; }
         #number-input { flex-grow: 1; padding: 12px 15px; font-size: 1rem; font-family: 'Roboto', sans-serif; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--input-bg-color); color: var(--text-color); transition: border-color 0.3s, background-color 0.3s; }
         #number-input:focus { outline: none; border-color: var(--button-bg-color); box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2); }
+        
         .btn { padding: 12px 20px; font-size: 1rem; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; display: inline-flex; justify-content: center; align-items: center; }
         .btn:disabled { background-color: var(--sub-text-color); cursor: not-allowed; }
+        
         #factorize-button { background-color: var(--button-bg-color); color: var(--button-text-color); flex-shrink: 0; }
         #factorize-button:not(:disabled):hover { background-color: var(--button-hover-bg-color); }
+        
         #settings-button { background-color: var(--button-secondary-bg-color); color: var(--button-secondary-text-color); padding: 12px; flex-shrink: 0; }
         #settings-button svg { width: 20px; height: 20px; }
         #settings-button:not(:disabled):hover { background-color: var(--button-secondary-hover-bg-color); }
-        #result-container { min-height: 80px; padding: 20px; margin-top: 1rem; border: 1px dashed var(--border-color); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; word-break: break-all; }
+
+        #result-container { min-height: 80px; padding: 20px; margin-top: 1rem; border: 1px dashed var(--border-color); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; word-break: break-all; transition: border-color 0.3s; }
         #divisors-section { margin-top: 2rem; text-align: left; border-top: 1px solid var(--border-color); padding-top: 2rem; }
         .section-title { font-size: 1.3rem; font-weight: 700; color: var(--text-color); margin-top: 0; margin-bottom: 1rem; text-align: center; }
         #divisors-output { background-color: var(--input-bg-color); padding: 15px 20px; border-radius: 8px; line-height: 1.8; word-break: break-word; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); }
         #divisors-count { text-align: right; margin-top: 0.75rem; color: var(--sub-text-color); font-size: 1rem; }
         
         /* 設定モーダル */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; visibility: hidden; opacity: 0; transition: visibility 0s 0.3s, opacity 0.3s ease-in-out; }
-        .modal.is-visible { visibility: visible; opacity: 1; transition: visibility 0s, opacity 0.3s ease-in-out; }
-        .modal-content { background-color: var(--card-bg-color); padding: 2rem; border-radius: 12px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); width: 90%; max-width: 400px; transform: scale(0.95); transition: transform 0.3s ease-in-out; }
-        .modal.is-visible .modal-content { transform: scale(1); }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal.is-visible { display: flex; }
+        .modal-content { background-color: var(--card-bg-color); padding: 2rem; border-radius: 12px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); width: 90%; max-width: 400px; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
         .modal-title { font-size: 1.5rem; font-weight: 700; margin: 0; }
-        .close-button { cursor: pointer; border: none; background: none; color: var(--text-color); line-height: 1; padding: 0.5rem; margin: -0.5rem; }
+        .close-button { cursor: pointer; border: none; background: none; color: var(--text-color); line-height: 1; padding: 0; opacity: 0.7; }
+        .close-button:hover { opacity: 1; }
         .close-button svg { width: 20px; height: 20px; display: block; }
-        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; }
+        .setting-item:not(:last-child) { border-bottom: 1px solid var(--border-color); }
+        .setting-item-label { color: var(--text-color); }
+        
         .toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--button-secondary-bg-color); transition: .4s; border-radius: 28px; }
@@ -84,15 +84,14 @@
 
     <main>
         <h1>素因数分解 & 約数計算</h1>
-        <p>Python (Sympy) で整数・小数を素因数分解します。</p>
+        <p>Python (SymPy) で数式を計算し、素因数分解します。</p>
         
         <div class="form-container">
-            <input type="text" id="number-input" placeholder="例: 2^100, 12345678901234567890, 7.5">
+            <input type="text" id="number-input" placeholder="例: (60+60)*10, 2^100, 7.5">
             <button id="factorize-button" class="btn">計算！</button>
             <button id="settings-button" class="btn" aria-label="設定">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
-                    <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
+                    <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
                 </svg>
             </button>
         </div>
@@ -103,8 +102,8 @@
         
         <div id="divisors-section" style="display: none;">
             <h2 class="section-title">約数</h2>
-            <div id="divisors-output"></div>
-            <p id="divisors-count"></p>
+            <div id="divisors-output" style="display: none;"></div>
+            <p id="divisors-count" style="display: none;"></p>
         </div>
     </main>
 
@@ -121,9 +120,16 @@
             </div>
             <div class="modal-body">
                 <div class="setting-item">
-                    <span>約数と合計個数を表示する</span>
+                    <span class="setting-item-label">約数の一覧を表示する</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="show-divisors-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                 <div class="setting-item">
+                    <span class="setting-item-label">約数の合計個数を表示する</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="show-divisors-count-toggle" checked>
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -143,87 +149,73 @@
         const settingsModal = document.getElementById('settings-modal');
         const closeModalButton = document.getElementById('close-modal-button');
         const showDivisorsToggle = document.getElementById('show-divisors-toggle');
+        const showDivisorsCountToggle = document.getElementById('show-divisors-count-toggle');
 
         let pyodide = null;
-        const settings = { showDivisors: true };
+        const settings = { showDivisors: true, showDivisorsCount: true };
 
-        // Pythonコード (Sympyを使用)
+        // SymPyを使ったPythonコード
         const pythonCode = `
 import sympy
+from sympy import sympify, Rational
 
-def get_prime_factors(n):
-    """整数nを素因数分解し、[素数, 指数]のソート済みリストを返す。"""
-    if not isinstance(n, int) or n < 2:
-        return []
+def process_expression(n, calc_divs, calc_count):
+    """
+    一つの関数で素因数分解、約数、約数の数を計算し、辞書として返す。
+    整数でない場合は、Noneを返す。
+    """
     try:
-        factors_dict = sympy.factorint(n)
-        return sorted(factors_dict.items())
-    except:
-        return [] # Sympyが扱えない巨大な数などのエラーハンドリング
+        # 数式を評価し、整数に変換しようと試みる
+        expr = sympify(n)
+        if not expr.is_Integer:
+            # 整数でなければ分数として扱う
+            frac = Rational(expr)
+            num_factors = sympy.factorint(frac.p)
+            den_factors = sympy.factorint(frac.q)
+            return {'type': 'fraction', 'num_factors': num_factors, 'den_factors': den_factors}
 
-def get_all_divisors(n):
-    """整数nの全ての約数をソート済みリストで返す。"""
-    if not isinstance(n, int) or n < 1:
-        return []
-    try:
-        return sympy.divisors(n)
-    except:
-        return []
-`;
+        num = int(expr)
+        if num < 2:
+            return {'type': 'error', 'message': '計算対象は2以上の整数である必要があります。'}
+
+        factors_dict = sympy.factorint(num)
         
-        // Pyodideの初期化
+        divs = []
+        if calc_divs:
+            divs = sympy.divisors(num)
+
+        count = 0
+        if calc_count:
+            count = sympy.divisor_count(num)
+
+        return {
+            'type': 'integer',
+            'original': num,
+            'factors': factors_dict,
+            'divisors': divs,
+            'count': count
+        }
+    except Exception as e:
+        return {'type': 'error', 'message': f'計算エラー: {e}'}
+`;
+
         async function initializePyodide() {
             factorizeButton.disabled = true;
             settingsButton.disabled = true;
-            resultOutput.textContent = '計算エンジンを準備中...';
             pyodide = await loadPyodide();
-            resultOutput.textContent = '高速計算ライブラリ(Sympy)を読込中...';
-            await pyodide.loadPackage("sympy");
+            await pyodide.loadPackage("sympy"); // SymPyをロード
             pyodide.runPython(pythonCode);
-            resultOutput.textContent = '結果はここに表示されます';
             factorizeButton.disabled = false;
             settingsButton.disabled = false;
             numberInput.focus();
         }
 
-        // --- JavaScriptヘルパー関数群 (変更なし) ---
-        const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
         const formatNumberWithSpaces = (num) => {
             const limit = typeof num === 'bigint' ? 10000n : 10000;
             if (num < limit) return num.toString();
             return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
         };
-        
-        // --- 入力解析 (変更なし) ---
-        function parseInput(input) {
-            let str = input.trim().replace(/,/g, '');
-            if (str === "") return { error: '値を入力してください。' };
-            if (str.includes('.') || str.includes('/')) {
-                try {
-                    const sanitizedStr = str.replace(/\^/g, '**');
-                    if (/[^0-9\.\/\*\s\-\+]/.test(sanitizedStr)) { throw new Error("不正な文字が含まれています。"); }
-                    const num = new Function(`return ${sanitizedStr}`)();
-                    if (typeof num !== 'number' || !isFinite(num)) { return { error: '無効な計算式です。' }; }
-                    if (num > Number.MAX_SAFE_INTEGER) { return { error: '小数・分数の計算結果が大きすぎます。整数として入力してください。' }; }
-                    if (Number.isInteger(num)) { return { type: 'integer', value: BigInt(num) }; }
-                    const numStr = String(num);
-                    const decimalPlaces = (numStr.split('.')[1] || '').length;
-                    const denominator = Math.pow(10, decimalPlaces);
-                    const numerator = Math.round(num * denominator);
-                    const commonDivisor = gcd(numerator, denominator);
-                    return { type: 'fraction', numerator: numerator / commonDivisor, denominator: denominator / commonDivisor, };
-                } catch (e) { return { error: '入力形式が正しくありません。' }; }
-            }
-            try {
-                const sanitizedStr = str.replace(/\^/g, '**');
-                if (/[^0-9\*\s\-\+n]/.test(sanitizedStr)) { throw new Error("不正な文字が含まれています。"); }
-                const result = new Function(`return BigInt(${sanitizedStr})`)();
-                if (typeof result !== 'bigint') { return { error: '無効な計算式です。' }; }
-                return { type: 'integer', value: result };
-            } catch (e) { return { error: '整数の入力形式が正しくありません。' }; }
-        }
 
-        // --- 結果フォーマット ---
         function formatFactorsToLatex(factors) {
             if (!factors || factors.length === 0) return '1';
             return factors.map(([base, exponent]) => {
@@ -231,114 +223,99 @@ def get_all_divisors(n):
                 return exponent == 1 ? baseStr : `${baseStr}^{${exponent}}`;
             }).join(' \\times ');
         }
+        
+        async function runCalculation() {
+            divisorsSection.style.display = 'none';
+            const inputValue = numberInput.value.trim();
+            if (inputValue === "") {
+                resultOutput.textContent = "値を入力してください。";
+                return;
+            }
+
+            try {
+                const processExpression = pyodide.globals.get('process_expression');
+                const results = processExpression(inputValue, settings.showDivisors, settings.showDivisorsCount).toJs({ dict_converter: Map });
+
+                if (results.get('type') === 'error') {
+                    resultOutput.textContent = results.get('message');
+                    return;
+                }
+
+                if (results.get('type') === 'integer') {
+                    formatIntegerResult({
+                        original: results.get('original'),
+                        factors: Array.from(results.get('factors').entries()),
+                        divisors: results.get('divisors'),
+                        count: results.get('count')
+                    });
+                } else if (results.get('type') === 'fraction') {
+                    formatFractionResult({
+                        original: inputValue,
+                        numFactors: Array.from(results.get('num_factors').entries()),
+                        denFactors: Array.from(results.get('den_factors').entries())
+                    });
+                }
+
+            } catch (error) {
+                console.error("JavaScript実行エラー:", error);
+                resultOutput.textContent = '計算中に予期せぬエラーが発生しました。';
+            }
+        }
+
         function formatIntegerResult(data) {
             const { original, factors, divisors, count } = data;
             
-            if (factors.length === 0 && original > 1n) {
+            if (factors.length === 0) {
                 resultOutput.innerHTML = `\\( ${formatNumberWithSpaces(original)} \\) は素数です。`;
             } else {
                 const latexString = formatFactorsToLatex(factors);
                 resultOutput.innerHTML = `\\( ${formatNumberWithSpaces(original)} = ${latexString} \\)`;
             }
 
+            const showSection = settings.showDivisors || settings.showDivisorsCount;
+            divisorsSection.style.display = showSection ? 'block' : 'none';
+            divisorsOutput.style.display = settings.showDivisors ? 'block' : 'none';
+            divisorsCount.style.display = settings.showDivisorsCount ? 'block' : 'none';
+            
             if (settings.showDivisors) {
                 divisorsOutput.textContent = divisors.map(d => formatNumberWithSpaces(d)).join(', ');
+            }
+            if (settings.showDivisorsCount) {
                 divisorsCount.textContent = `(合計 ${formatNumberWithSpaces(count)} 個)`;
-                divisorsSection.style.display = 'block';
-            } else {
-                divisorsSection.style.display = 'none';
             }
             
             MathJax.typesetPromise([resultOutput, divisorsSection]);
         }
+        
         function formatFractionResult(data) {
             const { original, numFactors, denFactors } = data;
             const numLatex = formatFactorsToLatex(numFactors);
             const denLatex = formatFactorsToLatex(denFactors);
-            let displayOriginal = original.replace('/', ' \\div ');
+            const displayOriginal = original.replace(/([\+\-\*\/])/g, ' $1 ');
+
+            resultOutput.innerHTML = `\\( ${displayOriginal} = \\frac{${numLatex}}{${denLatex}} \\)`;
             
-            if (denLatex === '1') {
-                 resultOutput.innerHTML = `\\( ${displayOriginal} = ${numLatex} \\)`;
-            } else {
-                 resultOutput.innerHTML = `\\( ${displayOriginal} = \\frac{${numLatex}}{${denLatex}} \\)`;
-            }
             divisorsSection.style.display = 'none';
             MathJax.typesetPromise([resultOutput]);
         }
 
-        // 計算実行メイン関数
-        async function runCalculation() {
-            const inputValue = numberInput.value;
-            const parsed = parseInput(inputValue);
-
-            if (parsed.error) {
-                resultOutput.textContent = parsed.error;
-                return;
-            }
-
-            factorizeButton.disabled = true;
-            resultOutput.textContent = '計算中...';
-
-            try {
-                if (parsed.type === 'integer') {
-                    const n = parsed.value;
-                    if (n < 2n) {
-                        resultOutput.textContent = '計算対象は2以上の整数である必要があります。';
-                        factorizeButton.disabled = false;
-                        return;
-                    }
-                    const getPrimeFactors = pyodide.globals.get('get_prime_factors');
-                    const factors = getPrimeFactors(n).toJs();
-                    
-                    let divisors = [], count = 0n;
-                    if (settings.showDivisors) {
-                        const getAllDivisors = pyodide.globals.get('get_all_divisors');
-                        divisors = getAllDivisors(n).toJs();
-                        // 約数の個数は素因数分解の結果から計算する（効率化）
-                        count = factors.reduce((acc, [, exponent]) => acc * (BigInt(exponent) + 1n), 1n);
-                    }
-                    
-                    formatIntegerResult({ original: n, factors, divisors, count });
-
-                } else if (parsed.type === 'fraction') {
-                    const { numerator, denominator } = parsed;
-                    const getPrimeFactors = pyodide.globals.get('get_prime_factors');
-                    const numFactors = getPrimeFactors(numerator).toJs();
-                    const denFactors = getPrimeFactors(denominator).toJs();
-                    formatFractionResult({ original: inputValue, numFactors, denFactors });
-                }
-            } catch (error) {
-                console.error("Python/Sympy実行エラー:", error);
-                resultOutput.textContent = '計算中にエラーが発生しました。入力が大きすぎる可能性があります。';
-            } finally {
-                factorizeButton.disabled = false;
-            }
-        }
-        
         // --- イベントリスナー ---
         factorizeButton.addEventListener('click', runCalculation);
         numberInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
-                event.preventDefault(); // フォームのデフォルト送信を防止
+                event.preventDefault(); // フォーム送信を防ぐ
                 runCalculation();
             }
         });
 
-        // 設定モーダル用
         settingsButton.addEventListener('click', () => settingsModal.classList.add('is-visible'));
         closeModalButton.addEventListener('click', () => settingsModal.classList.remove('is-visible'));
         settingsModal.addEventListener('click', (event) => {
             if (event.target === settingsModal) settingsModal.classList.remove('is-visible');
         });
-        showDivisorsToggle.addEventListener('change', (event) => {
-            settings.showDivisors = event.target.checked;
-            // 設定変更後、もし結果が表示されていれば再描画する
-            if (resultOutput.innerHTML.includes('=')) {
-                runCalculation();
-            }
-        });
+        showDivisorsToggle.addEventListener('change', (e) => settings.showDivisors = e.target.checked);
+        showDivisorsCountToggle.addEventListener('change', (e) => settings.showDivisorsCount = e.target.checked);
 
-        // 初期化
         initializePyodide();
     </script>
 </body>
