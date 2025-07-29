@@ -237,7 +237,8 @@ def process_expression(expr_str):
                 dom.resultOutput.innerHTML = `\\( ${formatNumberWithSpaces(original)} \\) は素数です。`;
             } else {
                 const factorsLatex = formatFactorsToLatex(factors);
-                const sign = isNegative ? '-1 \\times ' : '';
+                // ★★★ 変更点: '-1 \times ' ではなく、単純な '-' を使うように修正 ★★★
+                const sign = isNegative ? '-' : '';
                 const mainExpression = (factorsLatex === '1' && isNegative) ? '-1' : sign + factorsLatex;
                 dom.resultOutput.innerHTML = `\\( ${formatNumberWithSpaces(original)} = ${mainExpression} \\)`;
             }
