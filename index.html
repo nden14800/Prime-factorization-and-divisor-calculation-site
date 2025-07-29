@@ -87,7 +87,6 @@
 </head>
 <body>
 
-    <!-- 初期状態で非表示にし、JSでアニメーションを適用する -->
     <main id="main-content" style="opacity: 0;">
         <h1>素因数分解 & 約数計算</h1>
         <p>Python (SymPy) で整数・小数を素因数分解します。</p>
@@ -114,7 +113,7 @@
 
     <!-- HTML for modals -->
     <div id="settings-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">設定</h2><button id="close-settings-modal-button" class="close-button" aria-label="閉じる"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button></div><div class="modal-body"><div class="setting-item"><span>約数を表示する</span><label class="toggle-switch"><input type="checkbox" id="show-divisors-list-toggle" checked><span class="slider"></span></label></div><div class="setting-item"><span>約数の合計個数を表示する</span><label class="toggle-switch"><input type="checkbox" id="show-divisors-count-toggle" checked><span class="slider"></span></label></div></div></div></div>
-    <div id="help-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">入力例</h2><button id="close-help-modal-button" class="close-button" aria-label="閉じる"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button></div><div class="modal-body"><p>以下の形式で数式を入力できます。</p><table class="help-table"><thead><tr><th>種類</th><th>入力例</th><th>説明</th></tr></thead><tbody><tr><td>整数</td><td><code>120</code></td><td>通常の整数です。</td></tr><tr><td>巨大な整数</td><td><code>123...890</code><br><code>2n**100n</code></td><td>JavaScriptの上限を超える数も計算可能です。<code>n</code>を付けると巨大数として扱われます。</td></tr><tr><td>小数</td><td><code>7.5</code></td><td>自動的に分数に変換されて計算されます。</td></tr><tr><td>分数</td><td><code>15/2</code></td><td>除算として計算されます。</td></tr><tr><td>指数</td><td><code>2^10</code><br><code>2**10</code></td><td><code>^</code> と <code>**</code> の両方に対応しています。</td></tr><tr><td>四則演算</td><td><code>10*(5+3)</code></td><td><code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> と括弧 <code>()</code> を使った計算が可能です。</td></tr></tbody></table></div></div></div>
+    <div id="help-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">入力例</h2><button id="close-help-modal-button" class="close-button" aria-label="閉じる"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button></div><div class="modal-body"><p>以下の形式で数式を入力できます。</p><table class="help-table"><thead><tr><th>種類</th><th>入力例</th><th>説明</th></tr></thead><tbody><tr><td>整数</td><td><code>120</code></td><td>通常の整数です。</td></tr><tr><td>負の整数</td><td><code>-120</code></td><td>負の数にも対応しています。</td></tr><tr><td>巨大な整数</td><td><code>123...890</code><br><code>2n**100n</code></td><td>JavaScriptの上限を超える数も計算可能です。<code>n</code>を付けると巨大数として扱われます。</td></tr><tr><td>小数</td><td><code>-7.5</code></td><td>自動的に分数に変換されて計算されます。</td></tr><tr><td>分数</td><td><code>15/2</code></td><td>除算として計算されます。</td></tr><tr><td>指数</td><td><code>2^10</code><br><code>2**10</code></td><td><code>^</code> と <code>**</code> の両方に対応しています。</td></tr><tr><td>四則演算</td><td><code>10*(-5+3)</code></td><td><code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> と括弧 <code>()</code> を使った計算が可能です。</td></tr></tbody></table></div></div></div>
 
     <script>
         const dom = {
@@ -137,52 +136,63 @@ import json
 
 def process_expression(expr_str):
     try:
-        # 文字列をSymPyの式に変換
         expr = sympy.sympify(expr_str)
 
-        # 記号が残っている場合はエラー
         if expr.free_symbols:
             return json.dumps({"error": f"未定義の記号が含まれています: {expr.free_symbols}"})
 
-        # 式が数値でない場合は評価して数値に変換
         if not expr.is_Number:
             expr = expr.evalf()
 
-        # 浮動小数点数を精度を保ったまま分数に変換
         if hasattr(expr, 'is_Float') and expr.is_Float:
             expr = sympy.Rational(str(expr))
 
         if not hasattr(expr, 'is_Rational') or not expr.is_Rational:
             return json.dumps({"error": "整数または分数に変換できない式です。"})
         
-        n, d = expr.p, expr.q # p: 分子, q: 分母
+        n, d = expr.p, expr.q
 
-        # 分子と分母の素因数分解
         num_factors = sympy.factorint(n)
         den_factors = sympy.factorint(d)
-        
+
+        is_negative = False
+        if -1 in num_factors:
+            is_negative = not is_negative
+            del num_factors[-1]
+        if -1 in den_factors:
+            is_negative = not is_negative
+            del den_factors[-1]
+
         divs = []
         divs_count = 0
         is_integer = (d == 1)
         divisors_limit_exceeded = False
+        is_prime_num = False
+        
+        abs_n = abs(n)
 
-        if is_integer and n >= 1:
-            int_n = int(n)
-            # 約数の個数は素因数分解の結果から計算する方が常に速い
-            count = 1
-            for p, e in num_factors.items():
-                count *= (e + 1)
-            divs_count = count
+        if is_integer:
+            int_abs_n = int(abs_n)
+            if int_abs_n > 1:
+                is_prime_num = sympy.isprime(int_abs_n)
             
-            # 約数のリスト取得は数が大きいと非常に遅くなるため、制限を設ける
-            if int_n <= 2000000:
-                divs = sympy.divisors(int_n)
-            else:
-                divisors_limit_exceeded = True
+            if int_abs_n >= 1:
+                # 約数の個数
+                count = 1
+                for p, e in num_factors.items():
+                    count *= (e + 1)
+                divs_count = count
+                
+                # 約数のリスト (正の約数のみ)
+                if int_abs_n <= 2000000:
+                    divs = sympy.divisors(int_abs_n)
+                else:
+                    divisors_limit_exceeded = True
 
-        # JSONでシリアライズして返す (JSとの連携が安定するため)
         return json.dumps({
             "is_integer": is_integer,
+            "is_negative": is_negative,
+            "is_prime": is_prime_num,
             "original_numerator": str(n),
             "original_denominator": str(d),
             "num_factors": {str(k): v for k, v in num_factors.items()},
@@ -212,7 +222,8 @@ def process_expression(expr_str):
 
         const formatNumberWithSpaces = (num) => {
             const limit = typeof num === 'bigint' ? 10000n : 10000;
-            if (num < limit) return num.toString();
+            const abs_num = num >= 0 ? num : -num;
+            if (abs_num < limit) return num.toString();
             return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
         };
         
@@ -221,13 +232,21 @@ def process_expression(expr_str):
             return factors.map(([base, exponent]) => `${formatNumberWithSpaces(base)}${exponent == 1 ? '' : `^{${exponent}}`}`).join(' \\times ');
         }
 
-        function formatIntegerResult({ original, factors, divisors, count, limitExceeded }) {
-            dom.resultOutput.innerHTML = (factors.length === 0 && original > 1)
-                ? `\\( ${formatNumberWithSpaces(original)} \\) は素数です。`
-                : `\\( ${formatNumberWithSpaces(original)} = ${formatFactorsToLatex(factors)} \\)`;
+        function formatIntegerResult({ original, isNegative, isPrime, factors, divisors, count, limitExceeded }) {
+            if (isPrime) {
+                dom.resultOutput.innerHTML = `\\( ${formatNumberWithSpaces(original)} \\) は素数です。`;
+            } else {
+                const factorsLatex = formatFactorsToLatex(factors);
+                const sign = isNegative ? '-1 \\times ' : '';
+                const mainExpression = (factorsLatex === '1' && isNegative) ? '-1' : sign + factorsLatex;
+                dom.resultOutput.innerHTML = `\\( ${formatNumberWithSpaces(original)} = ${mainExpression} \\)`;
+            }
+
+            dom.divisorsSection.querySelector('.section-title').textContent = '正の約数';
             
             const showList = settings.showDivisorsList;
             const showCount = settings.showDivisorsCount;
+            const abs_original = original >= 0n ? original : -original;
             
             if (showList) {
                 dom.divisorsOutput.textContent = limitExceeded
@@ -238,7 +257,7 @@ def process_expression(expr_str):
             
             dom.resultContainer.classList.add('animate-fade-in');
 
-            if (showList || showCount) {
+            if ((showList || showCount) && abs_original > 1n) {
                 dom.divisorsSection.style.display = 'block';
                 dom.divisorsOutput.style.display = showList ? 'block' : 'none';
                 dom.divisorsCount.style.display = showCount ? 'block' : 'none';
@@ -247,14 +266,15 @@ def process_expression(expr_str):
             MathJax.typesetPromise([dom.resultOutput, dom.divisorsSection]);
         }
         
-        function formatFractionResult({ original, numFactors, denFactors }) {
+        function formatFractionResult({ original, isNegative, numFactors, denFactors }) {
             const numLatex = formatFactorsToLatex(numFactors);
             const denLatex = formatFactorsToLatex(denFactors);
             const originalDisplay = original.replace('/', ' \\div ').replace('*', '\\times');
+            const sign = isNegative ? '-' : '';
 
             dom.resultOutput.innerHTML = (denLatex === '1') 
-                ? `\\( ${originalDisplay} = ${numLatex} \\)` 
-                : `\\( ${originalDisplay} = \\frac{${numLatex}}{${denLatex}} \\)`;
+                ? `\\( ${originalDisplay} = ${sign}${numLatex} \\)` 
+                : `\\( ${originalDisplay} = ${sign}\\frac{${numLatex}}{${denLatex}} \\)`;
             
             dom.resultContainer.classList.add('animate-fade-in');
             MathJax.typesetPromise([dom.resultOutput]);
@@ -265,7 +285,7 @@ def process_expression(expr_str):
                 el.classList.remove('animate-fade-in');
                 if (el === dom.divisorsSection) el.style.display = 'none';
             });
-            void dom.resultContainer.offsetWidth; // Trigger reflow for animation restart
+            void dom.resultContainer.offsetWidth;
 
             const userInput = dom.numberInput.value.trim();
             if (userInput === "") {
@@ -274,7 +294,6 @@ def process_expression(expr_str):
                 return;
             }
             
-            // SymPyが解釈できるように前処理
             const processedInput = userInput.replace(/,/g, '').replace(/\^/g, '**').replace(/(\d+)n/g, '$1');
 
             dom.factorizeButton.disabled = true;
@@ -296,8 +315,9 @@ def process_expression(expr_str):
 
                 if (result.is_integer) {
                     const n = BigInt(result.original_numerator);
-                    if (n < 2n) {
-                        dom.resultOutput.textContent = '計算対象は2以上の整数または分数である必要があります。';
+                    const abs_n = n >= 0n ? n : -n;
+                    if (abs_n < 2n) {
+                        dom.resultOutput.textContent = '計算対象は絶対値が2以上の整数または分数である必要があります。';
                         dom.resultContainer.classList.add('animate-fade-in');
                         return;
                     }
@@ -305,7 +325,9 @@ def process_expression(expr_str):
                     const count = BigInt(result.divisors_count);
                     
                     formatIntegerResult({ 
-                        original: n, 
+                        original: n,
+                        isNegative: result.is_negative,
+                        isPrime: result.is_prime,
                         factors: numFactors, 
                         divisors, 
                         count,
@@ -314,6 +336,7 @@ def process_expression(expr_str):
                 } else { // Fraction case
                     formatFractionResult({ 
                         original: dom.numberInput.value,
+                        isNegative: result.is_negative,
                         numFactors, 
                         denFactors 
                     });
