@@ -53,6 +53,7 @@
         #divisors-section { margin-top: 2rem; text-align: left; border-top: 1px solid var(--border-color); padding-top: 2rem; }
         .section-title { font-size: 1.3rem; font-weight: 700; color: var(--text-color); margin-top: 0; margin-bottom: 1rem; text-align: center; }
         #divisors-output { background-color: var(--input-bg-color); padding: 15px 20px; border-radius: 8px; line-height: 1.8; word-break: break-word; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); }
+        #load-more-container { text-align: center; margin-top: 1rem; display: none; }
         #divisors-count { text-align: right; margin-top: 0.75rem; color: var(--sub-text-color); font-size: 1rem; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background-color: var(--card-bg-color); padding: 2rem; border-radius: 12px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
@@ -105,13 +106,17 @@
         <div id="result-container"><div id="result-output">結果はここに表示されます</div></div>
         
         <div id="divisors-section" style="display: none;">
-            <h2 class="section-title">約数</h2>
+            <h2 class="section-title">正の約数</h2>
             <div id="divisors-output" style="display: none;"></div>
+            <!-- ★★★ 変更点: 「さらに読み込む」ボタンのコンテナを追加 ★★★ -->
+            <div id="load-more-container" style="text-align: center; margin-top: 1rem; display: none;">
+                <button id="load-more-button" class="btn">さらに読み込む</button>
+            </div>
             <p id="divisors-count" style="display: none;"></p>
         </div>
     </main>
 
-    <!-- HTML for modals -->
+    <!-- HTML for modals (変更なし) -->
     <div id="settings-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">設定</h2><button id="close-settings-modal-button" class="close-button" aria-label="閉じる"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button></div><div class="modal-body"><div class="setting-item"><span>約数を表示する</span><label class="toggle-switch"><input type="checkbox" id="show-divisors-list-toggle" checked><span class="slider"></span></label></div><div class="setting-item"><span>約数の合計個数を表示する</span><label class="toggle-switch"><input type="checkbox" id="show-divisors-count-toggle" checked><span class="slider"></span></label></div></div></div></div>
     <div id="help-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">入力例</h2><button id="close-help-modal-button" class="close-button" aria-label="閉じる"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button></div><div class="modal-body"><p>以下の形式で数式を入力できます。</p><table class="help-table"><thead><tr><th>種類</th><th>入力例</th><th>説明</th></tr></thead><tbody><tr><td>整数</td><td><code>120</code></td><td>通常の整数です。</td></tr><tr><td>負の整数</td><td><code>-120</code></td><td>負の数にも対応しています。</td></tr><tr><td>巨大な整数</td><td><code>123...890</code><br><code>2n**100n</code></td><td>JavaScriptの上限を超える数も計算可能です。<code>n</code>を付けると巨大数として扱われます。</td></tr><tr><td>小数</td><td><code>-7.5</code></td><td>自動的に分数に変換されて計算されます。</td></tr><tr><td>分数</td><td><code>15/2</code></td><td>除算として計算されます。</td></tr><tr><td>指数</td><td><code>2^10</code><br><code>2**10</code></td><td><code>^</code> と <code>**</code> の両方に対応しています。</td></tr><tr><td>四則演算</td><td><code>10*(-5+3)</code></td><td><code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> と括弧 <code>()</code> を使った計算が可能です。</td></tr></tbody></table></div></div></div>
 
@@ -125,20 +130,25 @@
             closeSettingsModalButton: document.getElementById('close-settings-modal-button'), showDivisorsListToggle: document.getElementById('show-divisors-list-toggle'),
             showDivisorsCountToggle: document.getElementById('show-divisors-count-toggle'), helpButton: document.getElementById('help-button'),
             helpModal: document.getElementById('help-modal'), closeHelpModalButton: document.getElementById('close-help-modal-button'),
+            // ★★★ 変更点: 新しいDOM要素を追加 ★★★
+            loadMoreContainer: document.getElementById('load-more-container'),
+            loadMoreButton: document.getElementById('load-more-button'),
         };
 
         let pyodide = null;
         const settings = { showDivisorsList: true, showDivisorsCount: true };
+        
+        // ★★★ 変更点: 約数表示に関する状態を管理する変数を追加 ★★★
+        let allDivisors = [];
+        let displayedDivisorsCount = 0;
+        const DIVISORS_CHUNK_SIZE = 500; // 一度に読み込む約数の数
 
-        // ★★★ 変更点 ★★★
+        // ★★★ 変更点: Pythonコードを修正。約数生成ロジックを削除し、素因数分解に専念させる ★★★
         const pythonCode = `
 import sympy
 import json
 import sys
 
-# 巨大な整数を文字列に変換する際の桁数制限を解除します。
-# Python 3.11以降、DoS攻撃を防ぐための安全機能としてこの制限が追加されましたが、
-# このアプリケーションでは意図的に巨大な数を扱うため、制限を無効化します (0 = 無制限)。
 sys.set_int_max_str_digits(0)
 
 def process_expression(expr_str):
@@ -170,10 +180,8 @@ def process_expression(expr_str):
             is_negative = not is_negative
             del den_factors[-1]
 
-        divs = []
         divs_count = 0
         is_integer = (d == 1)
-        divisors_limit_exceeded = False
         is_prime_num = False
         
         abs_n = abs(n)
@@ -184,17 +192,11 @@ def process_expression(expr_str):
                 is_prime_num = sympy.isprime(int_abs_n)
             
             if int_abs_n >= 1:
-                # 約数の個数
+                # 約数の個数のみ計算
                 count = 1
                 for p, e in num_factors.items():
                     count *= (e + 1)
                 divs_count = count
-                
-                # 約数のリスト (正の約数のみ)
-                if int_abs_n <= 2000000:
-                    divs = sympy.divisors(int_abs_n)
-                else:
-                    divisors_limit_exceeded = True
 
         return json.dumps({
             "is_integer": is_integer,
@@ -204,8 +206,6 @@ def process_expression(expr_str):
             "original_denominator": str(d),
             "num_factors": {str(k): v for k, v in num_factors.items()},
             "den_factors": {str(k): v for k, v in den_factors.items()},
-            "divisors": [str(div) for div in divs] if divs else [],
-            "divisors_limit_exceeded": divisors_limit_exceeded,
             "divisors_count": divs_count,
             "error": None
         })
@@ -239,7 +239,55 @@ def process_expression(expr_str):
             return factors.map(([base, exponent]) => `${formatNumberWithSpaces(base)}${exponent == 1 ? '' : `^{${exponent}}`}`).join(' \\times ');
         }
 
-        function formatIntegerResult({ original, isNegative, isPrime, factors, divisors, count, limitExceeded }) {
+        // ★★★ 変更点: 素因数分解の結果から約数リストを生成する関数をJavaScriptで実装 ★★★
+        function generateDivisors(factors) {
+            let divisors = [1n];
+            for (const [baseStr, exponent] of factors) {
+                const base = BigInt(baseStr);
+                const newDivisors = [];
+                for (let i = 0; i <= exponent; i++) {
+                    const power = base ** BigInt(i);
+                    for (const d of divisors) {
+                        newDivisors.push(d * power);
+                    }
+                }
+                divisors = newDivisors;
+            }
+            // 巨大な数（BigInt）を正しくソート
+            return divisors.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+        }
+        
+        // ★★★ 変更点: 約数を段階的に表示する関数 ★★★
+        function displayMoreDivisors() {
+            if (displayedDivisorsCount >= allDivisors.length) {
+                dom.loadMoreContainer.style.display = 'none';
+                return;
+            }
+
+            const start = displayedDivisorsCount;
+            const end = Math.min(start + DIVISORS_CHUNK_SIZE, allDivisors.length);
+            const chunk = allDivisors.slice(start, end);
+
+            // 最初のチャンクでなければ、カンマとスペースを追記
+            if (dom.divisorsOutput.textContent.length > 0) {
+                dom.divisorsOutput.textContent += ', ';
+            }
+            
+            dom.divisorsOutput.textContent += chunk.map(d => formatNumberWithSpaces(d)).join(', ');
+            
+            displayedDivisorsCount = end;
+
+            // まだ残りの約数があればボタンを表示、なければ非表示
+            if (displayedDivisorsCount < allDivisors.length) {
+                dom.loadMoreContainer.style.display = 'block';
+            } else {
+                dom.loadMoreContainer.style.display = 'none';
+            }
+        }
+        
+        // ★★★ 変更点: formatIntegerResultを段階的表示に対応させる ★★★
+        function formatIntegerResult({ original, isNegative, isPrime, factors, count }) {
+            // 素因数分解結果の表示 (変更なし)
             if (isPrime) {
                 dom.resultOutput.innerHTML = `\\( ${formatNumberWithSpaces(original)} \\) は素数です。`;
             } else {
@@ -248,6 +296,12 @@ def process_expression(expr_str):
                 const mainExpression = (factorsLatex === '1' && isNegative) ? '-1' : sign + factorsLatex;
                 dom.resultOutput.innerHTML = `\\( ${formatNumberWithSpaces(original)} = ${mainExpression} \\)`;
             }
+            
+            // 約数表示の初期化
+            allDivisors = [];
+            displayedDivisorsCount = 0;
+            dom.divisorsOutput.innerHTML = '';
+            dom.loadMoreContainer.style.display = 'none';
 
             dom.divisorsSection.querySelector('.section-title').textContent = '正の約数';
             
@@ -255,12 +309,15 @@ def process_expression(expr_str):
             const showCount = settings.showDivisorsCount;
             const abs_original = original >= 0n ? original : -original;
             
-            if (showList) {
-                dom.divisorsOutput.textContent = limitExceeded
-                    ? '数が大きすぎるため、約数の一覧は表示されません。'
-                    : divisors.map(d => formatNumberWithSpaces(d)).join(', ');
+            if (showCount) {
+                dom.divisorsCount.textContent = `(合計 ${formatNumberWithSpaces(count)} 個)`;
             }
-            if (showCount) dom.divisorsCount.textContent = `(合計 ${formatNumberWithSpaces(count)} 個)`;
+            
+            // 約数リスト表示が有効な場合のみ、生成と表示の準備
+            if (showList && abs_original > 1n) {
+                allDivisors = generateDivisors(factors);
+                displayMoreDivisors(); // 最初のチャンクを表示
+            }
             
             dom.resultContainer.classList.add('animate-fade-in');
 
@@ -328,7 +385,6 @@ def process_expression(expr_str):
                         dom.resultContainer.classList.add('animate-fade-in');
                         return;
                     }
-                    const divisors = result.divisors.map(d => BigInt(d));
                     const count = BigInt(result.divisors_count);
                     
                     formatIntegerResult({ 
@@ -336,9 +392,7 @@ def process_expression(expr_str):
                         isNegative: result.is_negative,
                         isPrime: result.is_prime,
                         factors: numFactors, 
-                        divisors, 
                         count,
-                        limitExceeded: result.divisors_limit_exceeded 
                     });
                 } else { // Fraction case
                     formatFractionResult({ 
@@ -359,6 +413,9 @@ def process_expression(expr_str):
         
         dom.factorizeButton.addEventListener('click', runCalculation);
         dom.numberInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') runCalculation(); });
+        
+        // ★★★ 変更点: 「さらに読み込む」ボタンのイベントリスナーを追加 ★★★
+        dom.loadMoreButton.addEventListener('click', displayMoreDivisors);
         
         const setupModal = (button, modal, closeButton) => {
             button.addEventListener('click', () => {
