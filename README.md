@@ -1,2 +1,2 @@
 # Prime-factorization-and-divisor-calculation-site
-WebでPythonを使用して素因数分解ができます
+Webで素因数分解ができます
