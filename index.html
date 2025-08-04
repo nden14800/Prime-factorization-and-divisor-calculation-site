@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>素因数分解・約数計算サイト</title>
+    <title>素因数分解・約数計算サイト (Worker対応版)</title>
     
     <!-- Google Fonts: Roboto & Roboto Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +17,7 @@
         onload="renderMathInElement(document.body);"></script>
 
     <style>
-        /* 基本スタイル (変更なし) */
+        /* CSSスタイルは変更なし */
         :root {
             --bg-color: #f0f2f5; --card-bg-color: #ffffff; --text-color: #1c1e21; --sub-text-color: #606770;
             --border-color: #dddfe2; --input-bg-color: #f5f6f7; --button-bg-color: #1877f2;
@@ -115,7 +115,7 @@
         </div>
     </main>
 
-    <!-- 設定モーダル -->
+    <!-- Modal HTML (変更なし) -->
     <div id="settings-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -147,8 +147,6 @@
             </div>
         </div>
     </div>
-    
-    <!-- ヘルプモーダル -->
     <div id="help-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -163,7 +161,7 @@
                         <tr><td>整数</td><td><code>120</code></td><td>正の整数です。巨大な数も扱えます。</td></tr>
                         <tr><td>負の整数</td><td><code>-120</code></td><td>負の数にも対応しています。</td></tr>
                         <tr><td>小数</td><td><code>-7.5</code>, <code>.5</code></td><td>自動的に分数に変換されて計算されます。</td></tr>
-                        <tr><td>注意</td><td colspan="2">このツールはJavaScriptのBigIntで計算します。極端に桁数の多い数ではブラウザが遅くなる可能性があります。</td></tr>
+                        <tr><td>注意</td><td colspan="2">このツールはJavaScriptのBigIntで計算します。極端に桁数の多い数では計算に時間がかかる場合がありますが、画面が固まることはありません。</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -172,6 +170,136 @@
 
 
     <script>
+        // === Web Workerのコードを文字列として定義 ===
+        const workerScript = `
+            const calculator = {
+                factorize(n) {
+                    if (typeof n !== 'bigint') n = BigInt(n);
+                    const factors = new Map();
+                    while (n % 2n === 0n) {
+                        factors.set(2n, (factors.get(2n) || 0) + 1);
+                        n /= 2n;
+                    }
+                    for (let i = 3n; i * i <= n; i += 2n) {
+                        while (n % i === 0n) {
+                            factors.set(i, (factors.get(i) || 0) + 1);
+                            n /= i;
+                        }
+                    }
+                    if (n > 1n) {
+                        factors.set(n, (factors.get(n) || 0) + 1);
+                    }
+                    return factors;
+                },
+                getDivisors(factorsMap) {
+                    const factors = Array.from(factorsMap.entries());
+                    const divisors = new Set([1n]);
+                    function findDivisors(factorIndex, currentDivisor) {
+                        if (factorIndex >= factors.length) return;
+                        const [base, exponent] = factors[factorIndex];
+                        let term = 1n;
+                        for (let i = 0; i <= exponent; i++) {
+                            const newDivisor = currentDivisor * term;
+                            divisors.add(newDivisor);
+                            findDivisors(factorIndex + 1, newDivisor);
+                            term *= base;
+                        }
+                    }
+                    findDivisors(0, 1n);
+                    return Array.from(divisors).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+                },
+                gcd(a, b) {
+                    while (b) { [a, b] = [b, a % b]; }
+                    return a;
+                },
+                isPrime(n) {
+                    if (n <= 1n) return false;
+                    if (n <= 3n) return true;
+                    if (n % 2n === 0n || n % 3n === 0n) return false;
+                    for (let i = 5n; i * i <= n; i = i + 6n) {
+                        if (n % i === 0n || n % (i + 2n) === 0n) return false;
+                    }
+                    return true;
+                }
+            };
+
+            self.onmessage = (e) => {
+                const { userInput } = e.data;
+                try {
+                    const isNegative = userInput.startsWith('-');
+                    const absInput = isNegative ? userInput.slice(1) : userInput;
+
+                    let numerator, denominator;
+                    
+                    if (absInput.includes('.')) {
+                        const parts = absInput.split('.');
+                        const integerPartStr = parts[0] || '0';
+                        const fractionalPartStr = parts[1] || '0';
+                        const fractionalPartLength = fractionalPartStr.length;
+                        const integerPart = BigInt(integerPartStr);
+                        const fractionalPart = BigInt(fractionalPartStr);
+                        const powerOf10 = 10n ** BigInt(fractionalPartLength);
+                        numerator = integerPart * powerOf10 + fractionalPart;
+                        denominator = powerOf10;
+
+                        if (numerator !== 0n) {
+                           const commonDivisor = calculator.gcd(numerator, denominator);
+                           numerator /= commonDivisor;
+                           denominator /= commonDivisor;
+                        }
+                    } else {
+                        numerator = BigInt(absInput);
+                        denominator = 1n;
+                    }
+
+                    if (numerator === 0n) {
+                       self.postMessage({ type: 'error', payload: { message: '0は素因数分解できません。' } });
+                       return;
+                    }
+                     if (denominator === 1n && numerator <= 1n) {
+                        self.postMessage({ type: 'error', payload: { message: '計算対象は絶対値が2以上の整数または分数である必要があります。' } });
+                        return;
+                    }
+
+                    const numFactorsMap = calculator.factorize(numerator);
+                    const denFactorsMap = calculator.factorize(denominator);
+                    
+                    // BigIntは直接postMessageできないので、文字列に変換して渡す
+                    const serializeFactors = (map) => Array.from(map.entries()).map(([base, exp]) => [base.toString(), exp]);
+                    
+                    if (denominator === 1n) {
+                        const divisors = calculator.getDivisors(numFactorsMap).map(d => d.toString());
+                        const isPrime = calculator.isPrime(numerator);
+                        self.postMessage({
+                            type: 'integerResult',
+                            payload: {
+                                original: numerator.toString(),
+                                isNegative,
+                                isPrime,
+                                factors: serializeFactors(numFactorsMap),
+                                divisors,
+                                count: divisors.length.toString()
+                            }
+                        });
+                    } else {
+                        self.postMessage({
+                            type: 'fractionResult',
+                            payload: {
+                                originalDisplay: userInput,
+                                isNegative,
+                                numFactors: serializeFactors(numFactorsMap),
+                                denFactors: serializeFactors(denFactorsMap)
+                            }
+                        });
+                    }
+
+                } catch (error) {
+                    self.postMessage({ type: 'error', payload: { message: error.message } });
+                }
+            };
+        `;
+
+        // === メインスレッドのスクリプト ===
         const dom = {
             mainContent: document.getElementById('main-content'), numberInput: document.getElementById('number-input'),
             factorizeButton: document.getElementById('factorize-button'), resultContainer: document.getElementById('result-container'),
@@ -187,57 +315,48 @@
         const settings = { autoCalculate: false, showDivisorsList: true, showDivisorsCount: true };
         const calculationState = { allDivisors: [], displayedCount: 0 };
         const DIVISORS_CHUNK_SIZE = 50;
+        let calculationWorker = null;
 
-        const calculator = {
-            factorize(n) {
-                if (typeof n !== 'bigint') n = BigInt(n);
-                const factors = new Map();
-                while (n % 2n === 0n) {
-                    factors.set(2n, (factors.get(2n) || 0) + 1);
-                    n /= 2n;
-                }
-                for (let i = 3n; i * i <= n; i += 2n) {
-                    while (n % i === 0n) {
-                        factors.set(i, (factors.get(i) || 0) + 1);
-                        n /= i;
+        function initializeWorker() {
+            const blob = new Blob([workerScript], { type: 'application/javascript' });
+            calculationWorker = new Worker(URL.createObjectURL(blob));
+
+            calculationWorker.onmessage = (e) => {
+                const { type, payload } = e.data;
+                
+                try {
+                    if (type === 'integerResult') {
+                        // Workerから来た文字列データをBigIntに戻す
+                        payload.original = BigInt(payload.original);
+                        payload.factors = payload.factors.map(([base, exp]) => [BigInt(base), exp]);
+                        payload.count = BigInt(payload.count);
+                        formatIntegerResult(payload);
+                    } else if (type === 'fractionResult') {
+                        payload.numFactors = payload.numFactors.map(([base, exp]) => [BigInt(base), exp]);
+                        payload.denFactors = payload.denFactors.map(([base, exp]) => [BigInt(base), exp]);
+                        formatFractionResult(payload);
+                    } else if (type === 'error') {
+                        throw new Error(payload.message);
+                    }
+                } catch (error) {
+                    console.error("計算エラー:", error);
+                    dom.resultOutput.textContent = `エラー: ${error.message}`;
+                } finally {
+                    dom.factorizeButton.disabled = false;
+                    dom.resultContainer.classList.add('animate-fade-in');
+                    if (window.renderMathInElement) {
+                        renderMathInElement(document.body, { delimiters: [{left: '\\(', right: '\\)', display: false}, {left: '\\[', right: '\\]', display: true}], throwOnError: false });
                     }
                 }
-                if (n > 1n) {
-                    factors.set(n, (factors.get(n) || 0) + 1);
-                }
-                return factors;
-            },
-            getDivisors(factorsMap) {
-                const factors = Array.from(factorsMap.entries());
-                const divisors = new Set([1n]);
-                function findDivisors(factorIndex, currentDivisor) {
-                    if (factorIndex >= factors.length) return;
-                    const [base, exponent] = factors[factorIndex];
-                    let term = 1n;
-                    for (let i = 0; i <= exponent; i++) {
-                        const newDivisor = currentDivisor * term;
-                        divisors.add(newDivisor);
-                        findDivisors(factorIndex + 1, newDivisor);
-                        term *= base;
-                    }
-                }
-                findDivisors(0, 1n);
-                return Array.from(divisors).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-            },
-            gcd(a, b) {
-                while (b) { [a, b] = [b, a % b]; }
-                return a;
-            },
-            isPrime(n) {
-                if (n <= 1n) return false;
-                if (n <= 3n) return true;
-                if (n % 2n === 0n || n % 3n === 0n) return false;
-                for (let i = 5n; i * i <= n; i = i + 6n) {
-                    if (n % i === 0n || n % (i + 2n) === 0n) return false;
-                }
-                return true;
-            }
-        };
+            };
+            
+            calculationWorker.onerror = (e) => {
+                 console.error("Workerエラー:", e);
+                 dom.resultOutput.textContent = `Workerで予期せぬエラーが発生しました: ${e.message}`;
+                 dom.factorizeButton.disabled = false;
+            };
+        }
+
 
         const formatNumberWithSpaces = (numStr) => {
             try {
@@ -265,7 +384,7 @@
                 dom.loadMoreContainer.style.display = 'none';
                 return;
             }
-            const chunkHtml = chunk.map(d => formatNumberWithSpaces(d.toString())).join(', ');
+            const chunkHtml = chunk.map(d => formatNumberWithSpaces(d)).join(', ');
             dom.divisorsOutput.textContent = (start === 0) ? chunkHtml : dom.divisorsOutput.textContent + ', ' + chunkHtml;
             calculationState.displayedCount = end;
             dom.loadMoreContainer.style.display = (calculationState.displayedCount >= calculationState.allDivisors.length) ? 'none' : 'block';
@@ -284,7 +403,7 @@
             dom.divisorsSection.querySelector('.section-title').textContent = '正の約数';
             if (settings.showDivisorsCount) dom.divisorsCount.textContent = `(合計 ${formatNumberWithSpaces(count.toString())} 個)`;
             if (settings.showDivisorsList) {
-                calculationState.allDivisors = divisors;
+                calculationState.allDivisors = divisors; // divisorsは文字列の配列
                 calculationState.displayedCount = 0;
                 displayDivisorsChunk();
             }
@@ -305,7 +424,7 @@
                 : `\\( ${originalDisplay} = ${sign}\\frac{${numLatex}}{${denLatex}} \\)`;
         }
 
-        async function runCalculation() {
+        function runCalculation() {
             dom.divisorsSection.style.display = 'none';
             dom.loadMoreContainer.style.display = 'none';
             dom.resultContainer.classList.remove('animate-fade-in');
@@ -319,81 +438,16 @@
                 return;
             }
 
-            try {
-                if (!/^-?\d*\.?\d*$/.test(userInput) || userInput === '.' || userInput === '-.' || userInput === '-') {
-                    throw new Error("無効な数値です。整数または小数を入力してください。");
-                }
-                const isNegative = userInput.startsWith('-');
-                const absInput = isNegative ? userInput.slice(1) : userInput;
-
-                if (!settings.autoCalculate) dom.factorizeButton.disabled = true;
-                dom.resultOutput.textContent = '計算中...';
-
-                let numerator, denominator;
-                
-                if (absInput.includes('.')) {
-                    const parts = absInput.split('.');
-                    const integerPartStr = parts[0] || '0';
-                    const fractionalPartStr = parts[1] || '0';
-                    const fractionalPartLength = parts[1]?.length || 0; 
-                    const integerPart = BigInt(integerPartStr);
-                    const fractionalPart = BigInt(fractionalPartStr);
-                    const powerOf10 = 10n ** BigInt(fractionalPartLength);
-                    numerator = integerPart * powerOf10 + fractionalPart;
-                    denominator = powerOf10;
-
-                    if (numerator === 0n) {
-                        denominator = 1n;
-                    } else {
-                       const commonDivisor = calculator.gcd(numerator, denominator);
-                       numerator /= commonDivisor;
-                       denominator /= commonDivisor;
-                    }
-                } else {
-                    numerator = BigInt(absInput);
-                    denominator = 1n;
-                }
-
-                if (numerator === 0n) {
-                   dom.resultOutput.textContent = '0は素因数分解できません。';
-                   if (!settings.autoCalculate) dom.factorizeButton.disabled = false;
-                   return;
-                }
-                if (denominator === 1n && numerator <= 1n) {
-                    dom.resultOutput.textContent = '計算対象は絶対値が2以上の整数または分数である必要があります。';
-                    if (!settings.autoCalculate) dom.factorizeButton.disabled = false;
-                    return;
-                }
-
-                const numFactorsMap = calculator.factorize(numerator);
-                const denFactorsMap = calculator.factorize(denominator);
-                
-                if (denominator === 1n) {
-                    const factors = Array.from(numFactorsMap.entries());
-                    const divisors = calculator.getDivisors(numFactorsMap);
-                    const isPrime = calculator.isPrime(numerator);
-                    formatIntegerResult({ original: numerator, isNegative, isPrime, factors, divisors, count: BigInt(divisors.length) });
-                } else {
-                    formatFractionResult({ originalDisplay: formatNumberWithSpaces(userInput), isNegative, numFactors: Array.from(numFactorsMap.entries()), denFactors: Array.from(denFactorsMap.entries()) });
-                }
-
-            } catch (error) {
-                console.error("計算エラー:", error);
-                dom.resultOutput.textContent = `エラー: ${error.message}`;
-            } finally {
-                if (!settings.autoCalculate) dom.factorizeButton.disabled = false;
-                dom.resultContainer.classList.add('animate-fade-in');
-                // DOMが更新された後にKaTeXを再実行
-                if (window.renderMathInElement) {
-                    renderMathInElement(document.body, {
-                        delimiters: [
-                            {left: '\\(', right: '\\)', display: false},
-                            {left: '\\[', right: '\\]', display: true}
-                        ],
-                        throwOnError: false
-                    });
-                }
+            if (!/^-?\d*\.?\d*$/.test(userInput) || userInput === '.' || userInput === '-.' || userInput === '-') {
+                 dom.resultOutput.textContent = "エラー: 無効な数値です。整数または小数を入力してください。";
+                 dom.resultContainer.classList.add('animate-fade-in');
+                 return;
             }
+
+            dom.factorizeButton.disabled = true;
+            dom.resultOutput.textContent = '計算中...';
+
+            calculationWorker.postMessage({ userInput });
         }
         
         dom.factorizeButton.addEventListener('click', runCalculation);
@@ -415,6 +469,7 @@
         dom.showDivisorsCountToggle.addEventListener('change', (e) => { settings.showDivisorsCount = e.target.checked; });
 
         document.addEventListener('DOMContentLoaded', () => {
+            initializeWorker(); // ページ読み込み時にWorkerを初期化
             dom.mainContent.style.opacity = '1';
             dom.mainContent.classList.add('animate-fade-in');
             dom.numberInput.focus();
