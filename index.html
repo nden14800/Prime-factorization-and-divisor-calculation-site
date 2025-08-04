@@ -10,11 +10,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Mono&display=swap" rel="stylesheet">
     
-    <!-- MathJax V3 -->
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- KaTeX V0.16.22 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" integrity="sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" integrity="sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
 
     <style>
-        /* 基本スタイル */
+        /* 基本スタイル (変更なし) */
         :root {
             --bg-color: #f0f2f5; --card-bg-color: #ffffff; --text-color: #1c1e21; --sub-text-color: #606770;
             --border-color: #dddfe2; --input-bg-color: #f5f6f7; --button-bg-color: #1877f2;
@@ -237,7 +240,6 @@
         };
 
         const formatNumberWithSpaces = (numStr) => {
-            // BigIntに変換できない文字列（例: "7.5"）はそのまま返す
             try {
                 const num = BigInt(numStr);
                 if (num < 10000n && num > -10000n) return num.toString();
@@ -292,7 +294,6 @@
                 dom.divisorsCount.style.display = settings.showDivisorsCount ? 'block' : 'none';
                 dom.divisorsSection.classList.add('animate-fade-in');
             }
-            MathJax.typesetPromise([dom.resultOutput, dom.divisorsSection]);
         }
         
         function formatFractionResult({ originalDisplay, isNegative, numFactors, denFactors }) {
@@ -302,7 +303,6 @@
             dom.resultOutput.innerHTML = (denLatex === '1') 
                 ? `\\( ${originalDisplay} = ${sign}${numLatex} \\)` 
                 : `\\( ${originalDisplay} = ${sign}\\frac{${numLatex}}{${denLatex}} \\)`;
-            MathJax.typesetPromise([dom.resultOutput]);
         }
 
         async function runCalculation() {
@@ -332,22 +332,16 @@
                 let numerator, denominator;
                 
                 if (absInput.includes('.')) {
-                    // ★★★ ここからが修正箇所 ★★★
                     const parts = absInput.split('.');
                     const integerPartStr = parts[0] || '0';
                     const fractionalPartStr = parts[1] || '0';
-                    const fractionalPartLength = parts[1]?.length || 0; // ?. を使って安全に長さを取得
-
+                    const fractionalPartLength = parts[1]?.length || 0; 
                     const integerPart = BigInt(integerPartStr);
                     const fractionalPart = BigInt(fractionalPartStr);
-                    
                     const powerOf10 = 10n ** BigInt(fractionalPartLength);
-                    
                     numerator = integerPart * powerOf10 + fractionalPart;
                     denominator = powerOf10;
-                    // ★★★ ここまでが修正箇所 ★★★
 
-                    // 0/1 のようなケースを避ける
                     if (numerator === 0n) {
                         denominator = 1n;
                     } else {
@@ -362,13 +356,11 @@
 
                 if (numerator === 0n) {
                    dom.resultOutput.textContent = '0は素因数分解できません。';
-                   dom.resultContainer.classList.add('animate-fade-in');
                    if (!settings.autoCalculate) dom.factorizeButton.disabled = false;
                    return;
                 }
                 if (denominator === 1n && numerator <= 1n) {
                     dom.resultOutput.textContent = '計算対象は絶対値が2以上の整数または分数である必要があります。';
-                    dom.resultContainer.classList.add('animate-fade-in');
                     if (!settings.autoCalculate) dom.factorizeButton.disabled = false;
                     return;
                 }
@@ -391,6 +383,16 @@
             } finally {
                 if (!settings.autoCalculate) dom.factorizeButton.disabled = false;
                 dom.resultContainer.classList.add('animate-fade-in');
+                // DOMが更新された後にKaTeXを再実行
+                if (window.renderMathInElement) {
+                    renderMathInElement(document.body, {
+                        delimiters: [
+                            {left: '\\(', right: '\\)', display: false},
+                            {left: '\\[', right: '\\]', display: true}
+                        ],
+                        throwOnError: false
+                    });
+                }
             }
         }
         
